@@ -638,13 +638,26 @@ async function forceSyncFromSupabase() {
 // ════════════════════════════════════════════════════════
 //  CONSTANTES
 // ════════════════════════════════════════════════════════
-// Identifiants admin — lus depuis localStorage, avec valeurs par défaut
+// Gestion multi-admin — tableau stocké dans localStorage + Supabase
+const DEFAULT_ADMINS = [
+  { id: 1, username: 'admin', password: 'admin123', name: 'Administrateur', superadmin: true }
+];
+function getAdmins() {
+  const raw = localStorage.getItem('mos_admins');
+  return raw ? JSON.parse(raw) : JSON.parse(JSON.stringify(DEFAULT_ADMINS));
+}
+function setAdmins(list) {
+  localStorage.setItem('mos_admins', JSON.stringify(list));
+  syncToSupabase('admins', list);
+}
+// Compat legacy — cherche l'admin courant connecté
 function getAdminCreds() {
-  return {
-    user: localStorage.getItem('mos_admin_user') || 'admin',
-    pass: localStorage.getItem('mos_admin_pass') || 'admin123',
-    name: localStorage.getItem('mos_admin_name') || 'Administrateur'
-  };
+  if (currentUser && currentUser._adminId) {
+    const a = getAdmins().find(a => a.id === currentUser._adminId);
+    if (a) return { user: a.username, pass: a.password, name: a.name };
+  }
+  const a = getAdmins()[0];
+  return { user: a.username, pass: a.password, name: a.name };
 }
 const MAT_COLORS = ['tag-blue','tag-green','tag-orange','tag-yellow','tag-purple','tag-pink','tag-blue','tag-green'];
 const MAT_ICONS  = ['📘','📗','📙','📕','📓','📒','📔','📑'];
@@ -667,6 +680,7 @@ let currentMatTab = 'cours'; // pour les pages matière
 //  DONNÉES PAR DÉFAUT
 // ════════════════════════════════════════════════════════
 const defaultData = {
+  admins: [{ id: 1, username: 'admin', password: 'admin123', name: 'Administrateur', superadmin: true }],
   matieres: ['Pneumatique','Hydraulique','Automatismes','Électrotechnique','Mécanique','Sécurité'],
   etudiants: [
     { id:1, nom:'Dupont', prenom:'Jean', username:'jdupont', tempPass:'mos2024', password:null, firstLogin:true },
@@ -738,9 +752,8 @@ function showLoginForm(type) {
     ? 'Connexion <span>Administrateur</span>'
     : 'Connexion <span>Étudiant</span>';
   document.getElementById('form-sub').textContent = 'Entrez vos identifiants pour accéder à la plateforme.';
-  const creds = getAdminCreds();
   document.getElementById('login-hint').innerHTML = type === 'admin'
-    ? `🔑 Identifiant actuel — <strong>${creds.user} / ••••••</strong>`
+    ? `🔑 Entrez votre identifiant et mot de passe administrateur`
     : '🔑 Démo — <strong>lmartin / test123</strong> &nbsp;|&nbsp; Première connexion : <strong>jdupont / mos2024</strong>';
   document.getElementById('err-msg').style.display = 'none';
   document.getElementById('inp-user').value = '';
@@ -760,10 +773,11 @@ function doLogin() {
   err.style.display = 'none';
 
   if (loginType === 'admin') {
-    const creds = getAdminCreds();
-    if (u !== creds.user || p !== creds.pass) { err.style.display = 'block'; return; }
+    const admins = getAdmins();
+    const adminFound = admins.find(a => a.username === u && a.password === p);
+    if (!adminFound) { err.style.display = 'block'; return; }
     currentRole = 'admin';
-    currentUser = { name: creds.name };
+    currentUser = { name: adminFound.name, _adminId: adminFound.id };
     goToApp();
   } else {
     const etudiants = getData('etudiants');
@@ -830,8 +844,7 @@ function initApp() {
   const av = document.getElementById('sb-avatar');
   if (currentRole === 'admin') {
     av.textContent = 'AD'; av.className = 'user-avatar admin';
-    const creds = getAdminCreds();
-    document.getElementById('sb-name').textContent = creds.name;
+    document.getElementById('sb-name').textContent = currentUser.name || 'Administrateur';
     document.getElementById('sb-role').textContent = 'Administrateur';
   } else {
     const initials = (currentUser.prenom[0] + currentUser.nom[0]).toUpperCase();
@@ -871,7 +884,7 @@ function buildSidebar() {
     navEl.appendChild(makeNavItem({ id:'admin-etudiants', icon:'👥', label:'Gérer les comptes' }));
 
     navEl.appendChild(makeSection('CONFIGURATION'));
-    navEl.appendChild(makeNavItem({ id:'admin-compte',   icon:'🔐', label:'Mon compte admin'      }));
+    navEl.appendChild(makeNavItem({ id:'admin-compte',   icon:'🔐', label:'Comptes admins'        }));
     navEl.appendChild(makeNavItem({ id:'admin-supabase', icon:'🗄️', label:'Supabase / Sauvegarde' }));
 
   } else {
@@ -914,7 +927,7 @@ function buildMobileNav() {
         { id:'admin-cours',      icon:'📁', label:'Cours'     },
         { id:'admin-etudiants',  icon:'👥', label:'Étudiants' },
         { id:'admin-matieres',   icon:'🏷️', label:'Matières'  },
-        { id:'admin-compte',     icon:'🔐', label:'Compte'    },
+        { id:'admin-compte',     icon:'🔐', label:'Admins'    },
       ]
     : [
         { id:'dash',   icon:'🏠', label:'Accueil' },
@@ -1372,34 +1385,42 @@ function renderAdmin(id, main) {
     </div>`;
 
   } else if (id === 'admin-compte') {
-    const creds = getAdminCreds();
+    const admins = getAdmins();
+    const meId = currentUser._adminId || admins[0].id;
+    const me = admins.find(a => a.id === meId) || admins[0];
     main.innerHTML = `
     <div class="page active">
       <div class="page-header">
-        <div class="page-title">🔐 Mon <span>Compte Admin</span></div>
-        <div class="page-sub">Modifiez vos identifiants de connexion administrateur</div>
+        <div class="page-title">🔐 Gestion des <span>Administrateurs</span></div>
+        <div class="page-sub">Créez plusieurs comptes admin — chacun peut se connecter depuis n'importe quel appareil</div>
       </div>
       <div class="two-col">
         <div>
-          <div class="section-title">Modifier l'identifiant</div>
+          <div class="section-title">Ajouter un administrateur</div>
           <div class="admin-form" style="margin-bottom:1.5rem">
             <div class="form-group">
-              <label>Identifiant actuel</label>
-              <input type="text" value="${creds.user}" disabled style="opacity:.5;cursor:not-allowed" />
+              <label>Nom affiché</label>
+              <input type="text" id="na-name" placeholder="Ex : M. Dupont" />
             </div>
             <div class="form-group">
-              <label>Nom affiché (sidebar)</label>
-              <input type="text" id="new-admin-name" value="${creds.name}" placeholder="Ex : M. Dupont" />
+              <label>Identifiant de connexion</label>
+              <input type="text" id="na-user" placeholder="Ex : dupont" />
             </div>
             <div class="form-group">
-              <label>Nouvel identifiant de connexion</label>
-              <input type="text" id="new-admin-user" placeholder="Laissez vide pour ne pas changer" />
+              <label>Mot de passe</label>
+              <input type="password" id="na-pass" placeholder="Minimum 6 caractères" />
             </div>
-            <button class="btn-save" style="background:linear-gradient(135deg,#a064ff,#6030c0)" onclick="saveAdminIdentifiant()">💾 Enregistrer l'identifiant</button>
+            <div class="form-group">
+              <label>Confirmer le mot de passe</label>
+              <input type="password" id="na-pass2" placeholder="Répétez" />
+            </div>
+            <div id="na-err" style="color:var(--red);font-size:.82rem;margin-bottom:.8rem;display:none"></div>
+            <button class="btn-save" style="background:linear-gradient(135deg,#a064ff,#6030c0)" onclick="addAdmin()">➕ Créer l'administrateur</button>
           </div>
 
-          <div class="section-title">Modifier le mot de passe</div>
+          <div class="section-title">Mon mot de passe</div>
           <div class="admin-form">
+            <div style="font-size:.82rem;color:var(--muted);margin-bottom:1rem">Connecté en tant que : <strong style="color:var(--accent)">${me.username}</strong></div>
             <div class="form-group">
               <label>Mot de passe actuel</label>
               <input type="password" id="old-admin-pass" placeholder="Votre mot de passe actuel" />
@@ -1409,39 +1430,33 @@ function renderAdmin(id, main) {
               <input type="password" id="new-admin-pass" placeholder="Minimum 6 caractères" />
             </div>
             <div class="form-group">
-              <label>Confirmer le nouveau mot de passe</label>
-              <input type="password" id="confirm-admin-pass" placeholder="Répétez le nouveau mot de passe" />
+              <label>Confirmer</label>
+              <input type="password" id="confirm-admin-pass" placeholder="Répétez" />
             </div>
             <div id="admin-pass-err" style="color:var(--red);font-size:.82rem;margin-bottom:.8rem;display:none"></div>
-            <button class="btn-save" onclick="saveAdminPassword()">🔒 Changer le mot de passe</button>
+            <button class="btn-save" onclick="saveAdminPassword()">🔒 Changer mon mot de passe</button>
           </div>
         </div>
 
         <div>
-          <div class="section-title">Identifiants actuels</div>
-          <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1.5rem">
-            <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1.2rem">
-              <div class="user-avatar admin" style="width:52px;height:52px;font-size:1.1rem">AD</div>
-              <div>
-                <div style="font-weight:700;font-size:1.05rem">${creds.name}</div>
-                <div style="font-size:.8rem;color:var(--muted);font-family:var(--font-mono)">Administrateur</div>
+          <div class="section-title">Administrateurs (${admins.length})</div>
+          ${admins.map(a => `
+            <div class="student-row" style="margin-bottom:.7rem">
+              <div class="user-avatar admin" style="width:38px;height:38px;font-size:.85rem;flex-shrink:0">${a.name.slice(0,2).toUpperCase()}</div>
+              <div class="student-info">
+                <div class="student-name">${a.name} ${a.id === meId ? '<span style="font-size:.7rem;color:var(--accent);font-family:var(--font-mono)">(vous)</span>' : ''}</div>
+                <div class="student-meta">@${a.username}${a.superadmin ? ' · super-admin' : ''}</div>
               </div>
-            </div>
-            <div style="background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:1rem;font-family:var(--font-mono);font-size:.82rem">
-              <div style="margin-bottom:.5rem">👤 Identifiant : <span style="color:var(--accent)">${creds.user}</span></div>
-              <div>🔒 Mot de passe : <span style="color:var(--muted)">••••••••</span></div>
-            </div>
-            <div style="margin-top:1.2rem;padding:.9rem;background:rgba(255,107,53,.07);border:1px solid rgba(255,107,53,.2);border-radius:8px;font-size:.82rem;color:var(--muted);line-height:1.6">
-              ⚠️ <strong style="color:var(--accent3)">Important :</strong> Après avoir changé vos identifiants, notez-les soigneusement. Si vous perdez votre mot de passe, vous devrez modifier directement le fichier HTML.
-            </div>
-            <div style="margin-top:1rem;padding:.9rem;background:rgba(0,200,255,.05);border:1px solid rgba(0,200,255,.15);border-radius:8px;font-size:.82rem;color:var(--muted);line-height:1.6">
-              💡 Les identifiants sont sauvegardés dans le <strong style="color:var(--accent)">localStorage</strong> de votre navigateur. Pour une sécurité maximale, utilisez Supabase Auth.
-            </div>
+              ${!a.superadmin && a.id !== meId
+                ? `<button class="btn-sm btn-red" onclick="deleteAdmin(${a.id})">🗑</button>`
+                : `<span style="font-size:.75rem;color:var(--muted);font-family:var(--font-mono)">protégé</span>`}
+            </div>`).join('')}
+          <div style="margin-top:1rem;padding:.9rem;background:rgba(255,107,53,.07);border:1px solid rgba(255,107,53,.2);border-radius:8px;font-size:.82rem;color:var(--muted);line-height:1.6">
+            ⚠️ <strong style="color:var(--accent3)">Important :</strong> Le super-admin ne peut pas être supprimé. Notez bien vos identifiants — les comptes admin sont synchronisés via Supabase et accessibles depuis tous les appareils.
           </div>
         </div>
       </div>
     </div>`;
-
   } else if (id === 'admin-supabase') {
     const sbStatus = supabaseReady ? '🟢 Connecté' : '🔴 Hors ligne';
     const sbStatusColor = supabaseReady ? 'var(--green)' : 'var(--red)';
@@ -1780,19 +1795,31 @@ function resetEtudiant(id) {
   });
 }
 
-// ── COMPTE ADMIN ──
-function saveAdminIdentifiant() {
-  const newName = document.getElementById('new-admin-name').value.trim();
-  const newUser = document.getElementById('new-admin-user').value.trim().toLowerCase();
-  if (newName) localStorage.setItem('mos_admin_name', newName);
-  if (newUser) {
-    if (newUser.length < 3) { customAlert('L\'identifiant doit faire au moins 3 caractères.', '⚠️'); return; }
-    localStorage.setItem('mos_admin_user', newUser);
-  }
-  // Rafraîchir le nom dans la sidebar
-  document.getElementById('sb-name').textContent = getAdminCreds().name;
-  showToast('✅ Identifiant mis à jour !');
+// ── COMPTE ADMIN (multi-admin) ──
+function addAdmin() {
+  const name  = document.getElementById('na-name').value.trim();
+  const user  = document.getElementById('na-user').value.trim().toLowerCase();
+  const pass  = document.getElementById('na-pass').value;
+  const pass2 = document.getElementById('na-pass2').value;
+  const err   = document.getElementById('na-err');
+  err.style.display = 'none';
+  if (!name || !user || !pass) { err.textContent = '❌ Tous les champs sont requis.'; err.style.display = 'block'; return; }
+  if (user.length < 3) { err.textContent = '❌ Identifiant trop court (min 3 car.).'; err.style.display = 'block'; return; }
+  if (pass.length < 6) { err.textContent = '❌ Mot de passe trop court (min 6 car.).'; err.style.display = 'block'; return; }
+  if (pass !== pass2) { err.textContent = '❌ Les mots de passe ne correspondent pas.'; err.style.display = 'block'; return; }
+  const admins = getAdmins();
+  if (admins.find(a => a.username === user)) { err.textContent = '❌ Cet identifiant est déjà utilisé.'; err.style.display = 'block'; return; }
+  admins.push({ id: Date.now(), username: user, password: pass, name, superadmin: false });
+  setAdmins(admins);
+  showToast('✅ Administrateur créé !');
   showPage('admin-compte');
+}
+function deleteAdmin(id) {
+  customConfirm('Supprimer cet administrateur ?', 'Ce compte admin sera définitivement supprimé.', '🗑️', () => {
+    const admins = getAdmins().filter(a => a.id !== id);
+    setAdmins(admins);
+    showToast('🗑 Administrateur supprimé'); showPage('admin-compte');
+  });
 }
 function saveAdminPassword() {
   const oldPass     = document.getElementById('old-admin-pass').value;
@@ -1800,30 +1827,23 @@ function saveAdminPassword() {
   const confirmPass = document.getElementById('confirm-admin-pass').value;
   const err         = document.getElementById('admin-pass-err');
   err.style.display = 'none';
-
-  const creds = getAdminCreds();
-  if (oldPass !== creds.pass) {
+  const admins = getAdmins();
+  const meId = currentUser._adminId || admins[0].id;
+  const idx = admins.findIndex(a => a.id === meId);
+  if (idx === -1) return;
+  if (oldPass !== admins[idx].password) {
     err.textContent = '❌ Mot de passe actuel incorrect.'; err.style.display = 'block'; return;
   }
   if (newPass.length < 6) {
-    err.textContent = '❌ Le nouveau mot de passe doit faire au moins 6 caractères.'; err.style.display = 'block'; return;
+    err.textContent = '❌ Minimum 6 caractères.'; err.style.display = 'block'; return;
   }
   if (newPass !== confirmPass) {
     err.textContent = '❌ Les mots de passe ne correspondent pas.'; err.style.display = 'block'; return;
   }
-  localStorage.setItem('mos_admin_pass', newPass);
+  admins[idx].password = newPass;
+  setAdmins(admins);
   showToast('🔒 Mot de passe changé avec succès !');
   showPage('admin-compte');
-}
-
-// ── SUPABASE CONFIG ──
-function saveSbConfig() {
-  const url = document.getElementById('sb-url').value.trim();
-  const key = document.getElementById('sb-key').value.trim();
-  localStorage.setItem('mos_sb_url', url);
-  localStorage.setItem('mos_sb_key', key);
-  showToast('✅ Configuration Supabase enregistrée !');
-  showPage('admin-supabase');
 }
 
 // ── EXPORT / IMPORT JSON ──
