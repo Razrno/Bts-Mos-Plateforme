@@ -237,6 +237,146 @@
   /* ── BADGES ── */
   .badge{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;background:var(--accent);color:#000;font-size:.7rem;font-weight:700;margin-left:auto;}
 
+  /* ── TWO-COL GRIDS (remplace les styles inline) ── */
+  .two-col   { display:grid; grid-template-columns:1fr 1fr; gap:2rem; align-items:start; }
+  .two-col-sm{ display:grid; grid-template-columns:1fr 1fr; gap:1rem; }
+
+  /* ── MOBILE HEADER (caché sur PC) ── */
+  .mob-header{
+    display:none; position:fixed; top:0; left:0; right:0; height:56px; z-index:150;
+    background:var(--bg2); border-bottom:1px solid var(--border);
+    align-items:center; padding:0 1rem; gap:1rem;
+  }
+  .mob-logo{
+    font-family:var(--font-head); font-weight:900; font-size:1.3rem;
+    background:linear-gradient(135deg,var(--accent),var(--accent2));
+    -webkit-background-clip:text; -webkit-text-fill-color:transparent; flex:1;
+  }
+  .mob-hamburger{
+    background:none; border:1px solid var(--border); border-radius:8px;
+    color:var(--text); font-size:1.2rem; padding:.35rem .6rem; cursor:pointer;
+    transition:background .2s;
+  }
+  .mob-hamburger:hover{ background:rgba(0,200,255,.08); }
+
+  /* ── SIDEBAR OVERLAY (caché sur PC) ── */
+  .sidebar-overlay{
+    display:none; position:fixed; inset:0; background:rgba(0,0,0,.6);
+    z-index:190; opacity:0; transition:opacity .3s;
+  }
+
+  /* ── MOBILE BOTTOM NAV (caché sur PC) ── */
+  .mob-bottom-nav{
+    display:none; position:fixed; bottom:0; left:0; right:0; height:62px;
+    background:var(--bg2); border-top:1px solid var(--border);
+    align-items:center; justify-content:space-around; z-index:140;
+  }
+  .mob-nav-btn{
+    display:flex; flex-direction:column; align-items:center; gap:3px;
+    background:none; border:none; color:var(--muted); cursor:pointer;
+    font-size:.65rem; padding:.4rem .6rem; border-radius:8px; transition:all .2s;
+    min-width:52px;
+  }
+  .mob-nav-btn .icon{ font-size:1.3rem; }
+  .mob-nav-btn.active{ color:var(--accent); }
+  .mob-nav-btn:active{ background:rgba(0,200,255,.08); }
+
+  /* ══════════════════════════════════════════
+     RESPONSIVE — MOBILE (≤ 768px)
+     Totalement indépendant du layout PC
+  ══════════════════════════════════════════ */
+  @media (max-width: 768px) {
+
+    /* ── App layout : colonne pleine largeur ── */
+    #app-screen { flex-direction: column; }
+
+    /* ── Sidebar : tiroir latéral ── */
+    .sidebar {
+      position: fixed; left: 0; top: 0; height: 100vh;
+      z-index: 200; width: 280px;
+      transform: translateX(-100%);
+      transition: transform .3s cubic-bezier(.4,0,.2,1);
+      box-shadow: 4px 0 24px rgba(0,0,0,.5);
+    }
+    .sidebar.mob-open { transform: translateX(0); }
+    .sidebar-overlay  { display: block; }
+    .sidebar-overlay.active { opacity: 1; pointer-events: all; }
+
+    /* Bouton fermer la sidebar ── */
+    .mob-sidebar-close {
+      display: flex; align-items: center; justify-content: center;
+      position: absolute; top: .8rem; right: .8rem;
+      width: 32px; height: 32px; border-radius: 8px;
+      background: rgba(255,71,87,.12); border: 1px solid rgba(255,71,87,.2);
+      color: var(--red); font-size: 1rem; cursor: pointer;
+    }
+
+    /* ── En-tête mobile visible ── */
+    .mob-header { display: flex; }
+
+    /* ── Contenu principal ── */
+    .main {
+      padding: 1rem;
+      padding-top: 68px;   /* espace sous la barre mobile */
+      padding-bottom: 74px; /* espace au-dessus de la bottom nav */
+    }
+
+    /* ── Bottom nav visible ── */
+    .mob-bottom-nav { display: flex; }
+
+    /* ── Grids deux colonnes → une colonne ── */
+    .two-col, .two-col-sm { grid-template-columns: 1fr !important; gap: 1.2rem; }
+
+    /* ── Cards ── */
+    .grid-3 { grid-template-columns: 1fr; }
+    .grid-2 { grid-template-columns: 1fr; }
+
+    /* ── Stats : 2 colonnes max sur mobile ── */
+    .stats-row { grid-template-columns: repeat(2, 1fr); gap: .7rem; }
+    .stat-val  { font-size: 1.6rem; }
+
+    /* ── Admin forms ── */
+    .admin-form { padding: 1.2rem; max-width: 100%; }
+
+    /* ── Page header ── */
+    .page-title { font-size: 1.5rem; }
+    .page-header{ margin-bottom: 1.2rem; }
+
+    /* ── Login ── */
+    .login-header { margin-bottom: 1.5rem; }
+    .login-logo   { font-size: 2rem; }
+    .login-sub    { font-size: .72rem; letter-spacing: 1.5px; }
+    .login-card   { width: 100%; padding: 1.8rem 1.4rem; }
+    .login-form-wrap { padding: 1.8rem 1.4rem; }
+
+    /* ── Quiz builder : options en colonne ── */
+    .qb-options { grid-template-columns: 1fr; }
+
+    /* ── Modales ── */
+    .modal-box {
+      width: 96vw; max-width: 96vw;
+      padding: 1.2rem; border-radius: 12px;
+      max-height: 90vh;
+    }
+
+    /* ── Onglets matière ── */
+    .mat-tab-bar { gap: .2rem; }
+    .mat-tab     { padding: .5rem .7rem; font-size: .78rem; }
+
+    /* ── Student row : wrapping ── */
+    .student-row  { flex-wrap: wrap; gap: .6rem; }
+    .student-info { min-width: 120px; }
+
+    /* ── Section title ── */
+    .section-title { font-size: 1rem; }
+
+    /* ── Score quiz ── */
+    .score-big { font-size: 3rem; }
+
+    /* ── Toast en bas à gauche (ne pas masquer la bottom nav) ── */
+    .success-toast { bottom: 70px; right: 1rem; left: 1rem; text-align: center; }
+  }
+
   @keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
   @keyframes slideIn{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)}}
 </style>
@@ -306,7 +446,19 @@
 
 <!-- ═══════════════════════ APP ═══════════════════════ -->
 <div id="app-screen" class="screen">
-  <div class="sidebar">
+
+  <!-- BARRE MOBILE (visible uniquement sur téléphone) -->
+  <div class="mob-header">
+    <div class="mob-logo">MOS·RÉVIS</div>
+    <button class="mob-hamburger" onclick="toggleSidebar()" aria-label="Menu">☰</button>
+  </div>
+
+  <!-- OVERLAY (ferme la sidebar en cliquant à côté) -->
+  <div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
+
+  <div class="sidebar" id="main-sidebar">
+    <!-- Bouton fermer (mobile uniquement) -->
+    <button class="mob-sidebar-close" onclick="closeSidebar()" style="display:none" id="sb-close-btn">✕</button>
     <div class="sidebar-logo">MOS·RÉVIS <small>BTS MOS Sécurité</small></div>
     <div class="sidebar-user">
       <div class="user-avatar" id="sb-avatar"></div>
@@ -320,7 +472,12 @@
       <button class="btn-logout" onclick="logout()">⬅ Déconnexion</button>
     </div>
   </div>
+
   <div class="main" id="main-content"></div>
+
+  <!-- BOTTOM NAV MOBILE (visible uniquement sur téléphone) -->
+  <nav class="mob-bottom-nav" id="mob-bottom-nav"></nav>
+
 </div>
 
 <!-- TOAST -->
@@ -576,6 +733,7 @@ function initApp() {
   }
 
   buildSidebar();
+  buildMobileNav();
   showPage('dash');
 }
 
@@ -630,12 +788,63 @@ function makeNavItem(n) {
   div.className = 'nav-item';
   div.dataset.page = n.id;
   div.innerHTML = `<span class="icon">${n.icon}</span><span class="nav-label">${n.label}</span>`;
-  div.addEventListener('click', () => showPage(n.id));
+  div.addEventListener('click', () => {
+    showPage(n.id);
+    if (window.innerWidth <= 768) closeSidebar();
+  });
   return div;
+}
+
+// ── BOTTOM NAV MOBILE ──
+function buildMobileNav() {
+  const nav = document.getElementById('mob-bottom-nav');
+  if (!nav) return;
+  nav.innerHTML = '';
+  const items = currentRole === 'admin'
+    ? [
+        { id:'dash',             icon:'📊', label:'Accueil'   },
+        { id:'admin-cours',      icon:'📁', label:'Cours'     },
+        { id:'admin-etudiants',  icon:'👥', label:'Étudiants' },
+        { id:'admin-matieres',   icon:'🏷️', label:'Matières'  },
+        { id:'admin-compte',     icon:'🔐', label:'Compte'    },
+      ]
+    : [
+        { id:'dash',   icon:'🏠', label:'Accueil' },
+        { id:'fiches', icon:'📋', label:'Fiches'  },
+        { id:'quiz',   icon:'🧠', label:'Quiz'    },
+      ];
+
+  items.forEach(item => {
+    const btn = document.createElement('button');
+    btn.className = 'mob-nav-btn';
+    btn.dataset.page = item.id;
+    btn.innerHTML = `<span class="icon">${item.icon}</span>${item.label}`;
+    btn.addEventListener('click', () => showPage(item.id));
+    nav.appendChild(btn);
+  });
+}
+function toggleSidebar() {
+  const sb  = document.getElementById('main-sidebar');
+  const ov  = document.getElementById('sidebar-overlay');
+  const btn = document.getElementById('sb-close-btn');
+  sb.classList.toggle('mob-open');
+  ov.classList.toggle('active');
+  btn.style.display = sb.classList.contains('mob-open') ? 'flex' : 'none';
+}
+function closeSidebar() {
+  const sb  = document.getElementById('main-sidebar');
+  const ov  = document.getElementById('sidebar-overlay');
+  const btn = document.getElementById('sb-close-btn');
+  sb.classList.remove('mob-open');
+  ov.classList.remove('active');
+  btn.style.display = 'none';
 }
 
 function showPage(id) {
   document.querySelectorAll('#sidebar-nav .nav-item').forEach(el =>
+    el.classList.toggle('active', el.dataset.page === id));
+  // Sync bottom nav mobile
+  document.querySelectorAll('#mob-bottom-nav .mob-nav-btn').forEach(el =>
     el.classList.toggle('active', el.dataset.page === id));
   currentMatTab = 'cours';
   renderPage(id);
@@ -830,7 +1039,7 @@ function renderAdmin(id, main) {
         <div class="page-title">📁 Gestion des <span>Cours</span></div>
         <div class="page-sub">Ajoutez et gérez les fichiers de cours — Les fichiers sont stockés localement (Supabase recommandé pour les gros fichiers)</div>
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:2rem;align-items:start;flex-wrap:wrap">
+      <div class="two-col">
         <div>
           <div class="section-title">Ajouter un cours</div>
           <div class="admin-form">
@@ -880,7 +1089,7 @@ function renderAdmin(id, main) {
         <div class="page-title">✏️ Créer des <span>Fiches</span></div>
         <div class="page-sub">Rédigez des fiches de révision structurées pour vos étudiants</div>
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:2rem;align-items:start">
+      <div class="two-col">
         <div>
           <div class="section-title">Nouvelle fiche</div>
           <div class="admin-form">
@@ -924,7 +1133,7 @@ function renderAdmin(id, main) {
         <div class="page-title">⚡ Créer des <span>Quiz</span></div>
         <div class="page-sub">Construisez des QCM pour tester vos étudiants</div>
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:2rem;align-items:start">
+      <div class="two-col">
         <div>
           <div class="section-title">Nouveau quiz</div>
           <div class="admin-form">
@@ -932,7 +1141,7 @@ function renderAdmin(id, main) {
               <label>Titre du quiz</label>
               <input type="text" id="nq-titre" placeholder="Ex: Quiz Pneumatique Niveau 2" />
             </div>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+            <div class="two-col-sm">
               <div class="form-group">
                 <label>Matière</label>
                 <select id="nq-mat">${matOptions}</select>
@@ -974,7 +1183,7 @@ function renderAdmin(id, main) {
         <div class="page-title">🏷️ Gérer les <span>Matières</span></div>
         <div class="page-sub">Configurez les matières disponibles pour les étudiants et les cours</div>
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:2rem;align-items:start">
+      <div class="two-col">
         <div>
           <div class="section-title">Ajouter une matière</div>
           <div class="admin-form">
@@ -1008,11 +1217,11 @@ function renderAdmin(id, main) {
         <div class="page-title">👥 Gestion des <span>Étudiants</span></div>
         <div class="page-sub">Créez des comptes étudiants avec mot de passe provisoire</div>
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:2rem;align-items:start">
+      <div class="two-col">
         <div>
           <div class="section-title">Créer un compte étudiant</div>
           <div class="admin-form">
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+            <div class="two-col-sm">
               <div class="form-group">
                 <label>Prénom</label>
                 <input type="text" id="ne-prenom" placeholder="Jean" />
@@ -1062,7 +1271,7 @@ function renderAdmin(id, main) {
         <div class="page-title">🔐 Mon <span>Compte Admin</span></div>
         <div class="page-sub">Modifiez vos identifiants de connexion administrateur</div>
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:2rem;align-items:start">
+      <div class="two-col">
         <div>
           <div class="section-title">Modifier l'identifiant</div>
           <div class="admin-form" style="margin-bottom:1.5rem">
@@ -1135,7 +1344,7 @@ function renderAdmin(id, main) {
         <div class="page-sub">Connectez votre base de données pour une persistance durable des données</div>
       </div>
 
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:2rem;align-items:start;margin-bottom:2rem">
+      <div class="two-col" style="margin-bottom:2rem">
         <div>
           <div class="section-title">Configuration Supabase</div>
           <div class="admin-form">
