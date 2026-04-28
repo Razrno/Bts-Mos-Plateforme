@@ -1,0 +1,1682 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MOS·RÉVIS — Plateforme BTS MOS</title>
+<link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@300;400;600;700;900&family=Source+Code+Pro:wght@400;600&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#0a0e1a; --bg2:#0f1525; --bg3:#151c2e; --card:#1a2236;
+    --border:#1e2d45; --accent:#00c8ff; --accent2:#0077ff; --accent3:#ff6b35;
+    --green:#00e5a0; --yellow:#ffd93d; --red:#ff4757; --text:#e8edf5; --muted:#6b7a9a;
+    --font-head:'Exo 2',sans-serif; --font-body:'Lato',sans-serif; --font-mono:'Source Code Pro',monospace;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{background:var(--bg);color:var(--text);font-family:var(--font-body);min-height:100vh;overflow-x:hidden;}
+  body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+    background-image:linear-gradient(rgba(0,200,255,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(0,200,255,.03) 1px,transparent 1px);
+    background-size:40px 40px;}
+
+  /* ── SCREENS ── */
+  .screen{display:none;position:relative;z-index:1;min-height:100vh;}
+  .screen.active{display:flex;}
+
+  /* ── LOGIN ── */
+  #login-screen,#first-login-screen{
+    flex-direction:column;align-items:center;justify-content:center;padding:2rem;
+    background:radial-gradient(ellipse 80% 60% at 50% 0%,rgba(0,119,255,.15) 0%,transparent 70%);
+  }
+  .login-header{text-align:center;margin-bottom:3rem;}
+  .login-logo{font-family:var(--font-head);font-weight:900;font-size:3.2rem;letter-spacing:-1px;
+    background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+  .login-logo span{color:var(--accent3);-webkit-text-fill-color:var(--accent3);}
+  .login-sub{color:var(--muted);font-size:.9rem;letter-spacing:3px;text-transform:uppercase;margin-top:.5rem;font-family:var(--font-mono);}
+  .login-cards{display:flex;gap:2rem;flex-wrap:wrap;justify-content:center;}
+  .login-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:2.5rem 2rem;width:320px;cursor:pointer;transition:all .3s;position:relative;overflow:hidden;}
+  .login-card::before{content:'';position:absolute;inset:0;opacity:0;transition:opacity .3s;background:linear-gradient(135deg,rgba(0,200,255,.08),rgba(0,119,255,.08));}
+  .login-card:hover{border-color:var(--accent);transform:translateY(-4px);box-shadow:0 20px 40px rgba(0,200,255,.15);}
+  .login-card:hover::before{opacity:1;}
+  .lc-icon{font-size:3rem;margin-bottom:1.2rem;display:block;}
+  .lc-title{font-family:var(--font-head);font-weight:700;font-size:1.5rem;margin-bottom:.5rem;}
+  .lc-desc{color:var(--muted);font-size:.88rem;line-height:1.6;}
+  .login-card.admin .lc-title{color:var(--accent3);}
+  .login-card.etudiant .lc-title{color:var(--accent);}
+  .login-form-wrap{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:2.5rem;width:380px;max-width:100%;animation:fadeUp .3s ease;}
+  .form-title{font-family:var(--font-head);font-weight:700;font-size:1.4rem;margin-bottom:.3rem;}
+  .form-title span{color:var(--accent);}
+  .form-sub{color:var(--muted);font-size:.85rem;margin-bottom:1.8rem;line-height:1.5;}
+  .form-group{margin-bottom:1.2rem;}
+  .form-group label{display:block;font-size:.82rem;font-family:var(--font-mono);color:var(--muted);margin-bottom:.4rem;text-transform:uppercase;letter-spacing:1px;}
+  .form-group input{width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:.75rem 1rem;color:var(--text);font-family:var(--font-body);font-size:.95rem;transition:border-color .2s,box-shadow .2s;}
+  .form-group input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(0,200,255,.1);}
+  .btn-primary{width:100%;background:linear-gradient(135deg,var(--accent2),var(--accent));border:none;border-radius:8px;padding:.85rem;color:#fff;font-family:var(--font-head);font-weight:700;font-size:1rem;cursor:pointer;transition:opacity .2s,transform .2s;margin-top:.5rem;}
+  .btn-primary:hover{opacity:.9;transform:translateY(-1px);}
+  .btn-back{background:none;border:none;color:var(--muted);cursor:pointer;font-size:.85rem;margin-top:1rem;display:block;text-align:center;width:100%;transition:color .2s;}
+  .btn-back:hover{color:var(--text);}
+  .login-hint{background:rgba(0,200,255,.07);border:1px solid rgba(0,200,255,.2);border-radius:8px;padding:.75rem 1rem;margin-top:1rem;font-family:var(--font-mono);font-size:.78rem;color:var(--muted);}
+  .login-hint strong{color:var(--accent);}
+  .error-msg{color:var(--red);font-size:.82rem;margin-top:.5rem;display:none;}
+  .first-login-badge{display:inline-flex;align-items:center;gap:.5rem;background:rgba(0,229,160,.1);border:1px solid rgba(0,229,160,.3);border-radius:20px;padding:.4rem 1rem;color:var(--green);font-size:.8rem;font-family:var(--font-mono);margin-bottom:1.5rem;}
+
+  /* ── APP LAYOUT ── */
+  #app-screen{flex-direction:row;}
+  .sidebar{width:265px;min-height:100vh;background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;position:sticky;top:0;height:100vh;}
+  .sidebar-logo{padding:1.5rem 1.5rem 1rem;font-family:var(--font-head);font-weight:900;font-size:1.4rem;
+    background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;border-bottom:1px solid var(--border);}
+  .sidebar-logo small{display:block;font-size:.65rem;font-weight:400;color:var(--muted);-webkit-text-fill-color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-top:.2rem;}
+  .sidebar-user{padding:1rem 1.5rem;display:flex;align-items:center;gap:.8rem;border-bottom:1px solid var(--border);background:rgba(0,200,255,.03);}
+  .user-avatar{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--font-head);font-weight:700;font-size:.9rem;flex-shrink:0;}
+  .user-avatar.student{background:linear-gradient(135deg,#0077ff44,#00c8ff44);color:var(--accent);}
+  .user-avatar.admin{background:linear-gradient(135deg,#ff6b3544,#ffd93d44);color:var(--accent3);}
+  .user-info{flex:1;min-width:0;}
+  .user-name{font-weight:700;font-size:.9rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .user-role{font-size:.72rem;color:var(--muted);font-family:var(--font-mono);}
+  .sidebar-nav{flex:1;padding:.8rem 0;overflow-y:auto;}
+  .nav-section{padding:.6rem 1.5rem .2rem;font-size:.65rem;letter-spacing:2px;text-transform:uppercase;color:var(--muted);font-family:var(--font-mono);margin-top:.3rem;}
+  .nav-item{display:flex;align-items:center;gap:.8rem;padding:.65rem 1.5rem;cursor:pointer;transition:all .2s;border-left:3px solid transparent;font-size:.88rem;color:var(--muted);}
+  .nav-item:hover{background:rgba(0,200,255,.05);color:var(--text);}
+  .nav-item.active{background:rgba(0,200,255,.08);color:var(--accent);border-left-color:var(--accent);}
+  .nav-item .icon{font-size:1rem;width:20px;text-align:center;flex-shrink:0;}
+  .nav-item .nav-label{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .sidebar-footer{padding:1rem 1.5rem;border-top:1px solid var(--border);}
+  .btn-logout{width:100%;background:rgba(255,71,87,.1);border:1px solid rgba(255,71,87,.2);border-radius:8px;padding:.6rem;color:var(--red);font-size:.85rem;cursor:pointer;transition:all .2s;font-family:var(--font-body);}
+  .btn-logout:hover{background:rgba(255,71,87,.2);}
+
+  /* ── MAIN CONTENT ── */
+  .main{flex:1;overflow-y:auto;padding:2rem;}
+  .page{display:none;animation:fadeUp .3s ease;}
+  .page.active{display:block;}
+  .page-header{margin-bottom:2rem;}
+  .page-title{font-family:var(--font-head);font-weight:900;font-size:2rem;}
+  .page-title span{color:var(--accent);}
+  .page-sub{color:var(--muted);margin-top:.3rem;font-size:.9rem;}
+
+  /* ── CARDS ── */
+  .grid-3{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1.2rem;}
+  .grid-2{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:1.2rem;}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1.5rem;transition:all .25s;}
+  .card:hover{border-color:rgba(0,200,255,.3);box-shadow:0 8px 24px rgba(0,0,0,.3);transform:translateY(-2px);}
+  .card-tag{display:inline-block;padding:.25rem .7rem;border-radius:20px;font-size:.72rem;font-family:var(--font-mono);text-transform:uppercase;letter-spacing:1px;margin-bottom:.8rem;}
+  .tag-blue{background:rgba(0,200,255,.12);color:var(--accent);}
+  .tag-orange{background:rgba(255,107,53,.12);color:var(--accent3);}
+  .tag-green{background:rgba(0,229,160,.12);color:var(--green);}
+  .tag-yellow{background:rgba(255,217,61,.12);color:var(--yellow);}
+  .tag-purple{background:rgba(160,100,255,.12);color:#a064ff;}
+  .tag-pink{background:rgba(255,100,160,.12);color:#ff64a0;}
+  .card-title{font-family:var(--font-head);font-weight:700;font-size:1.05rem;margin-bottom:.4rem;}
+  .card-meta{font-size:.8rem;color:var(--muted);margin-bottom:1rem;}
+  .card-actions{display:flex;gap:.6rem;flex-wrap:wrap;}
+  .btn-sm{padding:.4rem .9rem;border-radius:6px;font-size:.8rem;cursor:pointer;border:1px solid;transition:all .2s;font-family:var(--font-body);}
+  .btn-blue{background:rgba(0,200,255,.1);border-color:rgba(0,200,255,.3);color:var(--accent);}
+  .btn-blue:hover{background:rgba(0,200,255,.2);}
+  .btn-orange{background:rgba(255,107,53,.1);border-color:rgba(255,107,53,.3);color:var(--accent3);}
+  .btn-orange:hover{background:rgba(255,107,53,.2);}
+  .btn-green{background:rgba(0,229,160,.1);border-color:rgba(0,229,160,.3);color:var(--green);}
+  .btn-green:hover{background:rgba(0,229,160,.2);}
+  .btn-red{background:rgba(255,71,87,.1);border-color:rgba(255,71,87,.3);color:var(--red);}
+  .btn-red:hover{background:rgba(255,71,87,.2);}
+  .btn-yellow{background:rgba(255,217,61,.1);border-color:rgba(255,217,61,.3);color:var(--yellow);}
+  .btn-yellow:hover{background:rgba(255,217,61,.2);}
+
+  /* ── STATS ── */
+  .stats-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:1rem;margin-bottom:2rem;}
+  .stat-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:1.2rem;text-align:center;}
+  .stat-val{font-family:var(--font-head);font-size:2rem;font-weight:900;}
+  .stat-lbl{font-size:.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px;font-family:var(--font-mono);}
+
+  /* ── SECTION TITLE ── */
+  .section-title{font-family:var(--font-head);font-size:1.1rem;font-weight:700;margin-bottom:1rem;padding-bottom:.6rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:.6rem;}
+  .section-title::before{content:'';display:block;width:3px;height:1.1rem;background:var(--accent);border-radius:2px;}
+
+  /* ── QUIZ ── */
+  .quiz-q-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1.8rem;margin-bottom:1.5rem;}
+  .quiz-q-num{font-family:var(--font-mono);font-size:.75rem;color:var(--muted);margin-bottom:.8rem;}
+  .quiz-q-text{font-size:1.05rem;font-weight:600;margin-bottom:1.2rem;line-height:1.5;}
+  .quiz-options{display:flex;flex-direction:column;gap:.6rem;}
+  .quiz-option{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:.75rem 1rem;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:.8rem;}
+  .quiz-option:hover{border-color:rgba(0,200,255,.4);background:rgba(0,200,255,.05);}
+  .quiz-option.selected{border-color:var(--accent2);background:rgba(0,119,255,.1);}
+  .quiz-option.correct{border-color:var(--green);background:rgba(0,229,160,.1);}
+  .quiz-option.wrong{border-color:var(--red);background:rgba(255,71,87,.1);}
+  .quiz-option-letter{width:28px;height:28px;border-radius:6px;background:var(--border);display:flex;align-items:center;justify-content:center;font-family:var(--font-mono);font-size:.8rem;font-weight:600;flex-shrink:0;}
+  .quiz-nav{display:flex;gap:1rem;align-items:center;flex-wrap:wrap;}
+  .score-big{font-family:var(--font-head);font-size:4rem;font-weight:900;}
+  .score-big.good{color:var(--green);}
+  .score-big.medium{color:var(--yellow);}
+  .score-big.bad{color:var(--red);}
+
+  /* ── FICHE ── */
+  .fiche-title-display{font-family:var(--font-head);font-size:1.6rem;font-weight:900;margin-bottom:.5rem;}
+  .fiche-content-display{line-height:1.8;color:#c8d4e8;white-space:pre-wrap;}
+
+  /* ── ADMIN FORMS ── */
+  .admin-form{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:2rem;max-width:700px;}
+  .admin-form .form-group{margin-bottom:1.4rem;}
+  .admin-form textarea{width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:.75rem 1rem;color:var(--text);font-family:var(--font-body);font-size:.95rem;resize:vertical;min-height:120px;transition:border-color .2s;}
+  .admin-form textarea:focus{outline:none;border-color:var(--accent);}
+  .admin-form input[type=text],.admin-form input[type=password],.admin-form select{width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:.75rem 1rem;color:var(--text);font-family:var(--font-body);font-size:.95rem;transition:border-color .2s;}
+  .admin-form input:focus,.admin-form select:focus{outline:none;border-color:var(--accent);}
+  .admin-form select option{background:var(--bg2);}
+  .btn-save{background:linear-gradient(135deg,var(--accent2),var(--accent));border:none;border-radius:8px;padding:.8rem 2rem;color:#fff;font-family:var(--font-head);font-weight:700;font-size:1rem;cursor:pointer;transition:opacity .2s,transform .2s;}
+  .btn-save:hover{opacity:.9;transform:translateY(-1px);}
+  .success-toast{position:fixed;bottom:2rem;right:2rem;background:var(--green);color:#0a0e1a;padding:.8rem 1.5rem;border-radius:8px;font-weight:700;font-size:.9rem;z-index:999;animation:slideIn .3s ease;display:none;}
+
+  /* ── QUIZ BUILDER ── */
+  .quiz-builder-q{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:1.2rem;margin-bottom:1rem;position:relative;}
+  .qb-remove{position:absolute;top:.8rem;right:.8rem;background:none;border:none;color:var(--muted);cursor:pointer;font-size:1rem;transition:color .2s;}
+  .qb-remove:hover{color:var(--red);}
+  .quiz-builder-q input[type=text]{margin-bottom:.6rem;font-size:.88rem;padding:.55rem .8rem;}
+  .qb-options{display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-bottom:.6rem;}
+  .qb-option-wrap{display:flex;gap:.4rem;align-items:center;}
+  .qb-option-wrap input[type=text]{margin:0;flex:1;font-size:.82rem;padding:.45rem .7rem;}
+  .qb-option-wrap input[type=radio]{accent-color:var(--accent);cursor:pointer;}
+  .qb-option-label{font-size:.75rem;color:var(--muted);white-space:nowrap;}
+  .add-q-btn{background:rgba(0,200,255,.08);border:1px dashed rgba(0,200,255,.3);border-radius:8px;padding:.8rem;color:var(--accent);width:100%;cursor:pointer;transition:all .2s;font-family:var(--font-body);font-size:.9rem;}
+  .add-q-btn:hover{background:rgba(0,200,255,.15);}
+
+  /* ── FILE UPLOAD ── */
+  .file-drop{border:2px dashed var(--border);border-radius:10px;padding:2.5rem;text-align:center;cursor:pointer;transition:all .2s;background:var(--bg2);}
+  .file-drop:hover,.file-drop.dragover{border-color:var(--accent);background:rgba(0,200,255,.05);}
+  .file-drop-icon{font-size:2.5rem;margin-bottom:.8rem;}
+  .file-drop p{color:var(--muted);font-size:.9rem;}
+  .file-drop input[type=file]{display:none;}
+  .file-list{margin-top:1rem;}
+  .file-item{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:.7rem 1rem;display:flex;align-items:center;gap:.8rem;margin-bottom:.5rem;}
+  .file-item-icon{font-size:1.2rem;}
+  .file-item-info{flex:1;}
+  .file-item-name{font-size:.88rem;font-weight:600;}
+  .file-item-size{font-size:.75rem;color:var(--muted);}
+
+  /* ── PROGRESS BAR ── */
+  .progress-wrap{background:var(--bg2);border-radius:4px;height:6px;margin:1rem 0;overflow:hidden;}
+  .progress-bar{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--accent2),var(--accent));transition:width .5s;}
+
+  /* ── MODAL ── */
+  .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:100;align-items:center;justify-content:center;}
+  .modal-overlay.open{display:flex;}
+  .modal-box{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:2rem;width:90%;max-width:600px;max-height:85vh;overflow-y:auto;animation:fadeUp .3s ease;}
+  .modal-close{float:right;background:none;border:none;color:var(--muted);cursor:pointer;font-size:1.4rem;transition:color .2s;}
+  .modal-close:hover{color:var(--text);}
+
+  /* ── EMPTY STATE ── */
+  .empty-state{text-align:center;padding:3rem 2rem;color:var(--muted);}
+  .empty-state .es-icon{font-size:3rem;margin-bottom:1rem;opacity:.4;}
+  .empty-state p{font-size:.9rem;}
+
+  /* ── SUPABASE GUIDE ── */
+  .sb-step{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1.5rem;margin-bottom:1rem;position:relative;}
+  .sb-step-num{position:absolute;top:-12px;left:1rem;background:var(--accent2);color:#fff;font-family:var(--font-head);font-weight:900;font-size:.85rem;padding:.2rem .7rem;border-radius:20px;}
+  .sb-step h3{font-family:var(--font-head);font-size:1rem;margin-bottom:.6rem;margin-top:.3rem;}
+  .sb-step p{color:var(--muted);font-size:.88rem;line-height:1.6;}
+  .code-block{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:1rem;font-family:var(--font-mono);font-size:.78rem;color:var(--accent);margin-top:.8rem;overflow-x:auto;white-space:pre;}
+  .sb-link{color:var(--accent);text-decoration:none;font-family:var(--font-mono);font-size:.85rem;}
+  .sb-link:hover{text-decoration:underline;}
+
+  /* ── GESTION ETUDIANTS ── */
+  .student-row{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:1rem 1.2rem;display:flex;align-items:center;gap:1rem;margin-bottom:.7rem;transition:border-color .2s;}
+  .student-row:hover{border-color:rgba(0,200,255,.3);}
+  .student-avatar-sm{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#0077ff44,#00c8ff44);color:var(--accent);display:flex;align-items:center;justify-content:center;font-family:var(--font-head);font-weight:700;font-size:.9rem;flex-shrink:0;}
+  .student-info{flex:1;min-width:0;}
+  .student-name{font-weight:700;font-size:.95rem;}
+  .student-meta{font-size:.78rem;color:var(--muted);font-family:var(--font-mono);}
+  .status-badge{padding:.2rem .7rem;border-radius:20px;font-size:.72rem;font-family:var(--font-mono);}
+  .status-first{background:rgba(255,217,61,.12);color:var(--yellow);}
+  .status-active{background:rgba(0,229,160,.12);color:var(--green);}
+
+  /* ── GESTION MATIERES ── */
+  .matiere-row{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:.9rem 1.2rem;display:flex;align-items:center;gap:1rem;margin-bottom:.6rem;}
+  .matiere-dot{width:12px;height:12px;border-radius:50%;flex-shrink:0;}
+
+  /* ── MATIERE PAGE ── */
+  .mat-tab-bar{display:flex;gap:.5rem;margin-bottom:1.5rem;border-bottom:1px solid var(--border);padding-bottom:0;}
+  .mat-tab{padding:.6rem 1.2rem;border-radius:8px 8px 0 0;cursor:pointer;font-size:.88rem;transition:all .2s;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-1px;}
+  .mat-tab:hover{color:var(--text);}
+  .mat-tab.active{color:var(--accent);border-bottom-color:var(--accent);background:rgba(0,200,255,.05);}
+
+  /* ── BADGES ── */
+  .badge{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;background:var(--accent);color:#000;font-size:.7rem;font-weight:700;margin-left:auto;}
+
+  @keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+  @keyframes slideIn{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)}}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════ LOGIN ═══════════════════════ -->
+<div id="login-screen" class="screen active">
+  <div class="login-header">
+    <div class="login-logo">MOS<span>·</span>RÉVIS</div>
+    <div class="login-sub">Plateforme BTS MOS — Management Opérationnel de la Sécurité</div>
+  </div>
+  <div id="login-choice" class="login-cards">
+    <div class="login-card etudiant" onclick="showLoginForm('etudiant')">
+      <span class="lc-icon">🎓</span>
+      <div class="lc-title">Espace Étudiant</div>
+      <div class="lc-desc">Accédez à vos cours, fiches de révision et testez vos connaissances avec les quiz.</div>
+    </div>
+    <div class="login-card admin" onclick="showLoginForm('admin')">
+      <span class="lc-icon">⚙️</span>
+      <div class="lc-title">Espace Admin</div>
+      <div class="lc-desc">Gérez les ressources pédagogiques, les comptes étudiants et la configuration.</div>
+    </div>
+  </div>
+  <div id="login-form-wrap" style="display:none;justify-content:center;">
+    <div class="login-form-wrap">
+      <div class="form-title" id="form-title">Connexion <span>Étudiant</span></div>
+      <div class="form-sub" id="form-sub">Entrez vos identifiants pour accéder à la plateforme.</div>
+      <div class="form-group">
+        <label>Identifiant</label>
+        <input type="text" id="inp-user" placeholder="Nom d'utilisateur" />
+      </div>
+      <div class="form-group">
+        <label>Mot de passe</label>
+        <input type="password" id="inp-pass" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()" />
+      </div>
+      <div class="error-msg" id="err-msg">❌ Identifiants incorrects.</div>
+      <button class="btn-primary" onclick="doLogin()">Se connecter →</button>
+      <div class="login-hint" id="login-hint"></div>
+      <button class="btn-back" onclick="backToChoice()">← Retour au choix</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════ PREMIÈRE CONNEXION ═══════════════════════ -->
+<div id="first-login-screen" class="screen">
+  <div class="login-header">
+    <div class="login-logo">MOS<span>·</span>RÉVIS</div>
+    <div class="login-sub">Première connexion — Sécurisez votre compte</div>
+  </div>
+  <div class="login-form-wrap">
+    <div class="first-login-badge">🔐 Première connexion détectée</div>
+    <div class="form-title">Créez votre <span>mot de passe</span></div>
+    <div class="form-sub">Bienvenue ! Pour sécuriser votre compte, veuillez définir un mot de passe personnel. Votre mot de passe provisoire ne sera plus valide.</div>
+    <div class="form-group">
+      <label>Nouveau mot de passe</label>
+      <input type="password" id="new-pass" placeholder="Minimum 6 caractères" />
+    </div>
+    <div class="form-group">
+      <label>Confirmer le mot de passe</label>
+      <input type="password" id="confirm-pass" placeholder="Répétez votre mot de passe" onkeydown="if(event.key==='Enter')saveNewPassword()" />
+    </div>
+    <div class="error-msg" id="first-login-err"></div>
+    <button class="btn-primary" onclick="saveNewPassword()">Définir mon mot de passe →</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════ APP ═══════════════════════ -->
+<div id="app-screen" class="screen">
+  <div class="sidebar">
+    <div class="sidebar-logo">MOS·RÉVIS <small>BTS MOS Sécurité</small></div>
+    <div class="sidebar-user">
+      <div class="user-avatar" id="sb-avatar"></div>
+      <div class="user-info">
+        <div class="user-name" id="sb-name"></div>
+        <div class="user-role" id="sb-role"></div>
+      </div>
+    </div>
+    <nav class="sidebar-nav" id="sidebar-nav"></nav>
+    <div class="sidebar-footer">
+      <button class="btn-logout" onclick="logout()">⬅ Déconnexion</button>
+    </div>
+  </div>
+  <div class="main" id="main-content"></div>
+</div>
+
+<!-- TOAST -->
+<div class="success-toast" id="toast"></div>
+
+<!-- MODAL FICHE -->
+<div class="modal-overlay" id="fiche-modal">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeModal('fiche-modal')">✕</button>
+    <div id="fiche-modal-content"></div>
+  </div>
+</div>
+
+<!-- MODAL QUIZ -->
+<div class="modal-overlay" id="quiz-modal">
+  <div class="modal-box" id="quiz-modal-box">
+    <button class="modal-close" onclick="closeModal('quiz-modal')">✕</button>
+    <div id="quiz-modal-content"></div>
+  </div>
+</div>
+
+<!-- MODAL CONFIRM -->
+<div class="modal-overlay" id="confirm-modal">
+  <div class="modal-box" style="max-width:420px;text-align:center;padding:2.5rem 2rem;">
+    <div style="font-size:2.5rem;margin-bottom:1rem" id="confirm-icon">⚠️</div>
+    <div style="font-family:var(--font-head);font-weight:700;font-size:1.1rem;margin-bottom:.6rem" id="confirm-title"></div>
+    <div style="color:var(--muted);font-size:.88rem;margin-bottom:2rem;line-height:1.6" id="confirm-msg"></div>
+    <div style="display:flex;gap:1rem;justify-content:center;">
+      <button class="btn-sm btn-red" id="confirm-ok" style="padding:.65rem 1.8rem;font-size:.9rem;font-weight:700">Confirmer</button>
+      <button class="btn-sm" style="padding:.65rem 1.8rem;font-size:.9rem;background:var(--bg2);border-color:var(--border);color:var(--muted)" onclick="closeModal('confirm-modal')">Annuler</button>
+    </div>
+  </div>
+</div>
+<!-- MODAL ALERT -->
+<div class="modal-overlay" id="alert-modal">
+  <div class="modal-box" style="max-width:380px;text-align:center;padding:2.5rem 2rem;">
+    <div style="font-size:2rem;margin-bottom:.8rem" id="alert-icon">ℹ️</div>
+    <div style="font-family:var(--font-head);font-weight:700;font-size:1rem;margin-bottom:1.5rem;line-height:1.5" id="alert-msg"></div>
+    <button class="btn-save" onclick="closeModal('alert-modal')" style="padding:.6rem 2rem">OK</button>
+  </div>
+</div>
+<!-- MODAL APERÇU COURS -->
+<div class="modal-overlay" id="cours-viewer-modal">
+  <div class="modal-box" style="max-width:900px;width:95vw;height:90vh;padding:1rem;display:flex;flex-direction:column;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.8rem;">
+      <div style="font-family:var(--font-head);font-weight:700;font-size:1rem;" id="cours-viewer-title">Aperçu du cours</div>
+      <button class="modal-close" onclick="closeModal('cours-viewer-modal')" style="float:none;">✕</button>
+    </div>
+    <iframe id="cours-viewer-iframe" style="flex:1;border:none;border-radius:8px;background:#fff;"></iframe>
+  </div>
+</div>
+
+<script>
+// ════════════════════════════════════════════════════════
+//  CONSTANTES
+// ════════════════════════════════════════════════════════
+// Identifiants admin — lus depuis localStorage, avec valeurs par défaut
+function getAdminCreds() {
+  return {
+    user: localStorage.getItem('mos_admin_user') || 'admin',
+    pass: localStorage.getItem('mos_admin_pass') || 'admin123',
+    name: localStorage.getItem('mos_admin_name') || 'Administrateur'
+  };
+}
+const MAT_COLORS = ['tag-blue','tag-green','tag-orange','tag-yellow','tag-purple','tag-pink','tag-blue','tag-green'];
+const MAT_ICONS  = ['📘','📗','📙','📕','📓','📒','📔','📑'];
+const MAT_DOTS   = ['#00c8ff','#00e5a0','#ff6b35','#ffd93d','#a064ff','#ff64a0','#00c8ff','#00e5a0'];
+
+// ════════════════════════════════════════════════════════
+//  ÉTAT
+// ════════════════════════════════════════════════════════
+let currentRole = null;
+let currentUser = null;
+let loginType   = null;
+let pendingFile = null;
+let pendingFileData = null;
+let qbCount = 0;
+let activeQuiz = null, currentQ = 0, answers = [];
+let tempStudentId = null;
+let currentMatTab = 'cours'; // pour les pages matière
+
+// ════════════════════════════════════════════════════════
+//  DONNÉES PAR DÉFAUT
+// ════════════════════════════════════════════════════════
+const defaultData = {
+  matieres: ['Pneumatique','Hydraulique','Automatismes','Électrotechnique','Mécanique','Sécurité'],
+  etudiants: [
+    { id:1, nom:'Dupont', prenom:'Jean', username:'jdupont', tempPass:'mos2024', password:null, firstLogin:true },
+    { id:2, nom:'Martin', prenom:'Lucie', username:'lmartin', tempPass:'mos2024', password:'test123', firstLogin:false },
+  ],
+  cours: [
+    { id:1, titre:'Pneumatique — Bases fondamentales', matiere:'Pneumatique', fichier:'cours_pneumatique.pdf', taille:'2.4 MB', date:'12/03/2025', hasFile:false },
+    { id:2, titre:'Hydraulique industrielle', matiere:'Hydraulique', fichier:'cours_hydraulique.pdf', taille:'3.1 MB', date:'18/03/2025', hasFile:false },
+    { id:3, titre:'Automatismes & Grafcet', matiere:'Automatismes', fichier:'cours_automatismes.pdf', taille:'1.8 MB', date:'25/03/2025', hasFile:false },
+    { id:4, titre:'Électrotechnique appliquée', matiere:'Électrotechnique', fichier:'cours_electro.pdf', taille:'2.2 MB', date:'01/04/2025', hasFile:false },
+  ],
+  fiches: [
+    { id:1, titre:'Composants pneumatiques essentiels', matiere:'Pneumatique', contenu:'📌 VÉRIN SIMPLE EFFET\n→ Poussée d\'air dans un seul sens\n→ Retour par ressort\n→ Utilisation : clapet, fixation légère\n\n📌 VÉRIN DOUBLE EFFET\n→ Alimentation en air des 2 côtés\n→ Force dans les 2 sens\n→ Utilisation : presses, manipulations\n\n📌 DISTRIBUTEUR 5/2\n→ 5 orifices, 2 positions\n→ Commande pneumatique ou électrique\n→ Pilotage : monostable / bistable\n\n📌 LOI DE PASCAL\n→ P = F / S (N/m²)', date:'12/03/2025' },
+    { id:2, titre:'Lecture de schémas hydrauliques', matiere:'Hydraulique', contenu:'📌 SYMBOLES NORMALISÉS ISO 1219\n→ Pompe : cercle + flèche\n→ Moteur : cercle + flèche inversée\n→ Vérin : rectangle ouvert\n\n📌 POMPE À ENGRENAGE\n→ Débit constant\n→ Haute pression possible\n\n📌 FORMULES CLÉS\n→ Q = V × n (débit)\n→ F = P × S (force vérin)', date:'18/03/2025' },
+    { id:3, titre:'Grafcet — Règles et méthodes', matiere:'Automatismes', contenu:'📌 STRUCTURE DU GRAFCET\n→ Étapes (rectangles numérotés)\n→ Transitions (barres horizontales)\n→ Actions associées aux étapes\n\n📌 RÈGLES D\'ÉVOLUTION\n→ R1 : Situation initiale\n→ R2 : Franchissement si réceptivité vraie\n→ R3 : Actions exécutées si étape active\n\n📌 STRUCTURES\n→ Séquence simple\n→ Sélection de séquence (OU)\n→ Parallélisme (ET)', date:'25/03/2025' },
+  ],
+  quiz: [
+    { id:1, titre:'Quiz Pneumatique — Niveau 1', matiere:'Pneumatique', duree:10, questions:[
+      { texte:'Quelle est l\'unité de la pression dans le SI ?', options:['Pascal (Pa)','Newton (N)','Joule (J)','Watt (W)'], correct:0 },
+      { texte:'Un vérin double effet permet une action de force dans :', options:['1 seul sens','2 sens','3 sens','Aucun sens'], correct:1 },
+      { texte:'À quoi sert un distributeur 5/2 ?', options:['Filtrer l\'air','Diriger le flux d\'air','Mesurer la pression','Lubrifier'], correct:1 },
+    ]},
+    { id:2, titre:'Quiz Hydraulique — Niveau 1', matiere:'Hydraulique', duree:10, questions:[
+      { texte:'Quel composant limite la pression maximale ?', options:['La pompe','Le vérin','Le limiteur de pression','Le réservoir'], correct:2 },
+      { texte:'La norme de symbolisation hydraulique est :', options:['ISO 9001','ISO 1219','EN 50110','NF C 15-100'], correct:1 },
+    ]},
+    { id:3, titre:'Quiz Automatismes — Grafcet', matiere:'Automatismes', duree:15, questions:[
+      { texte:'Une transition est franchie si :', options:['L\'étape précédente est active ET la réceptivité est vraie','L\'étape suivante est inactive','Le temps est écoulé','Opérateur appuie'], correct:0 },
+      { texte:'Le parallélisme dans un Grafcet correspond à :', options:['Une sélection OU','Une activation simultanée ET','Une boucle infinie','Un retour arrière'], correct:1 },
+    ]},
+  ]
+};
+
+// ════════════════════════════════════════════════════════
+//  HELPERS DONNÉES (localStorage)
+// ════════════════════════════════════════════════════════
+function getData(key) {
+  const raw = localStorage.getItem('mos_' + key);
+  return raw ? JSON.parse(raw) : JSON.parse(JSON.stringify(defaultData[key] || []));
+}
+function setData(key, val) { localStorage.setItem('mos_' + key, JSON.stringify(val)); }
+function getFileData(id)   { return localStorage.getItem('mos_file_' + id); }
+function setFileData(id,d) { try { localStorage.setItem('mos_file_' + id, d); return true; } catch(e) { return false; } }
+function delFileData(id)   { localStorage.removeItem('mos_file_' + id); }
+function getMatColor(mat) {
+  const mats = getData('matieres');
+  const i = mats.indexOf(mat);
+  return MAT_COLORS[i >= 0 ? i % MAT_COLORS.length : 0];
+}
+function getMatIcon(mat) {
+  const mats = getData('matieres');
+  const i = mats.indexOf(mat);
+  return MAT_ICONS[i >= 0 ? i % MAT_ICONS.length : 0];
+}
+
+// ════════════════════════════════════════════════════════
+//  LOGIN
+// ════════════════════════════════════════════════════════
+function showLoginForm(type) {
+  loginType = type;
+  document.getElementById('login-choice').style.display = 'none';
+  const wrap = document.getElementById('login-form-wrap');
+  wrap.style.display = 'flex'; wrap.style.justifyContent = 'center';
+  document.getElementById('form-title').innerHTML = type === 'admin'
+    ? 'Connexion <span>Administrateur</span>'
+    : 'Connexion <span>Étudiant</span>';
+  document.getElementById('form-sub').textContent = 'Entrez vos identifiants pour accéder à la plateforme.';
+  const creds = getAdminCreds();
+  document.getElementById('login-hint').innerHTML = type === 'admin'
+    ? `🔑 Identifiant actuel — <strong>${creds.user} / ••••••</strong>`
+    : '🔑 Démo — <strong>lmartin / test123</strong> &nbsp;|&nbsp; Première connexion : <strong>jdupont / mos2024</strong>';
+  document.getElementById('err-msg').style.display = 'none';
+  document.getElementById('inp-user').value = '';
+  document.getElementById('inp-pass').value = '';
+}
+
+function backToChoice() {
+  document.getElementById('login-choice').style.display = 'flex';
+  document.getElementById('login-form-wrap').style.display = 'none';
+  loginType = null;
+}
+
+function doLogin() {
+  const u = document.getElementById('inp-user').value.trim().toLowerCase();
+  const p = document.getElementById('inp-pass').value;
+  const err = document.getElementById('err-msg');
+  err.style.display = 'none';
+
+  if (loginType === 'admin') {
+    const creds = getAdminCreds();
+    if (u !== creds.user || p !== creds.pass) { err.style.display = 'block'; return; }
+    currentRole = 'admin';
+    currentUser = { name: creds.name };
+    goToApp();
+  } else {
+    const etudiants = getData('etudiants');
+    const etudiant = etudiants.find(e => e.username === u);
+    if (!etudiant) { err.style.display = 'block'; return; }
+
+    if (etudiant.firstLogin) {
+      if (p !== etudiant.tempPass) { err.style.display = 'block'; return; }
+      tempStudentId = etudiant.id;
+      document.getElementById('login-screen').classList.remove('active');
+      document.getElementById('first-login-screen').classList.add('active');
+      document.getElementById('new-pass').value = '';
+      document.getElementById('confirm-pass').value = '';
+      document.getElementById('first-login-err').style.display = 'none';
+    } else {
+      if (p !== etudiant.password) { err.style.display = 'block'; return; }
+      currentRole = 'etudiant';
+      currentUser = etudiant;
+      goToApp();
+    }
+  }
+}
+
+function saveNewPassword() {
+  const pass = document.getElementById('new-pass').value;
+  const conf = document.getElementById('confirm-pass').value;
+  const err = document.getElementById('first-login-err');
+  err.style.display = 'none';
+  if (pass.length < 6) { err.textContent = '❌ Mot de passe trop court (minimum 6 caractères).'; err.style.display = 'block'; return; }
+  if (pass !== conf) { err.textContent = '❌ Les mots de passe ne correspondent pas.'; err.style.display = 'block'; return; }
+
+  const etudiants = getData('etudiants');
+  const idx = etudiants.findIndex(e => e.id === tempStudentId);
+  if (idx !== -1) {
+    etudiants[idx].password = pass;
+    etudiants[idx].firstLogin = false;
+    setData('etudiants', etudiants);
+    currentRole = 'etudiant';
+    currentUser = etudiants[idx];
+  }
+  document.getElementById('first-login-screen').classList.remove('active');
+  goToApp();
+}
+
+function goToApp() {
+  document.getElementById('login-screen').classList.remove('active');
+  document.getElementById('first-login-screen').classList.remove('active');
+  document.getElementById('app-screen').classList.add('active');
+  initApp();
+}
+
+function logout() {
+  currentRole = null; currentUser = null;
+  document.getElementById('app-screen').classList.remove('active');
+  document.getElementById('login-screen').classList.add('active');
+  backToChoice();
+}
+
+// ════════════════════════════════════════════════════════
+//  INIT APP + SIDEBAR
+// ════════════════════════════════════════════════════════
+function initApp() {
+  // Avatar + user info
+  const av = document.getElementById('sb-avatar');
+  if (currentRole === 'admin') {
+    av.textContent = 'AD'; av.className = 'user-avatar admin';
+    const creds = getAdminCreds();
+    document.getElementById('sb-name').textContent = creds.name;
+    document.getElementById('sb-role').textContent = 'Administrateur';
+  } else {
+    const initials = (currentUser.prenom[0] + currentUser.nom[0]).toUpperCase();
+    av.textContent = initials; av.className = 'user-avatar student';
+    document.getElementById('sb-name').textContent = currentUser.prenom + ' ' + currentUser.nom;
+    document.getElementById('sb-role').textContent = 'BTS MOS — Étudiant';
+  }
+
+  buildSidebar();
+  showPage('dash');
+}
+
+function makeSection(label) {
+  const d = document.createElement('div');
+  d.className = 'nav-section';
+  d.textContent = label;
+  return d;
+}
+
+function buildSidebar() {
+  const navEl = document.getElementById('sidebar-nav');
+  navEl.innerHTML = '';          // vide une seule fois au début
+  const matieres = getData('matieres');
+
+  if (currentRole === 'admin') {
+    navEl.appendChild(makeSection('GESTION APPRENTISSAGE'));
+    [
+      { id:'dash',           icon:'📊', label:'Tableau de bord'      },
+      { id:'admin-cours',    icon:'📁', label:'Gérer les cours'       },
+      { id:'admin-fiches',   icon:'✏️',  label:'Créer des fiches'      },
+      { id:'admin-quiz',     icon:'⚡', label:'Créer des quiz'        },
+      { id:'admin-matieres', icon:'🏷️', label:'Gérer les matières'    },
+    ].forEach(n => navEl.appendChild(makeNavItem(n)));
+
+    navEl.appendChild(makeSection('GESTION ÉTUDIANT'));
+    navEl.appendChild(makeNavItem({ id:'admin-etudiants', icon:'👥', label:'Gérer les comptes' }));
+
+    navEl.appendChild(makeSection('CONFIGURATION'));
+    navEl.appendChild(makeNavItem({ id:'admin-compte',   icon:'🔐', label:'Mon compte admin'      }));
+    navEl.appendChild(makeNavItem({ id:'admin-supabase', icon:'🗄️', label:'Supabase / Sauvegarde' }));
+
+  } else {
+    navEl.appendChild(makeSection('MON ESPACE'));
+    navEl.appendChild(makeNavItem({ id:'dash', icon:'🏠', label:'Tableau de bord' }));
+
+    if (matieres.length > 0) {
+      navEl.appendChild(makeSection('COURS PAR MATIÈRE'));
+      matieres.forEach((mat, i) =>
+        navEl.appendChild(makeNavItem({ id:'mat-' + mat, icon: MAT_ICONS[i % MAT_ICONS.length], label: mat }))
+      );
+    }
+
+    navEl.appendChild(makeSection('RÉVISION'));
+    navEl.appendChild(makeNavItem({ id:'fiches', icon:'📋', label:'Toutes les fiches' }));
+    navEl.appendChild(makeNavItem({ id:'quiz',   icon:'🧠', label:'Tous les quiz'     }));
+  }
+}
+
+function makeNavItem(n) {
+  const div = document.createElement('div');
+  div.className = 'nav-item';
+  div.dataset.page = n.id;
+  div.innerHTML = `<span class="icon">${n.icon}</span><span class="nav-label">${n.label}</span>`;
+  div.addEventListener('click', () => showPage(n.id));
+  return div;
+}
+
+function showPage(id) {
+  document.querySelectorAll('#sidebar-nav .nav-item').forEach(el =>
+    el.classList.toggle('active', el.dataset.page === id));
+  currentMatTab = 'cours';
+  renderPage(id);
+}
+
+function renderPage(id) {
+  const main = document.getElementById('main-content');
+  if (currentRole === 'etudiant') renderStudent(id, main);
+  else renderAdmin(id, main);
+}
+
+// ════════════════════════════════════════════════════════
+//  RENDER — ÉTUDIANT
+// ════════════════════════════════════════════════════════
+function renderStudent(id, main) {
+  const cours   = getData('cours');
+  const fiches  = getData('fiches');
+  const quiz    = getData('quiz');
+  const matieres = getData('matieres');
+
+  if (id === 'dash') {
+    main.innerHTML = `
+    <div class="page active">
+      <div class="page-header">
+        <div class="page-title">Bienvenue, <span>${currentUser.prenom}</span> 👋</div>
+        <div class="page-sub">Votre espace de révision BTS Management Opérationnel de la Sécurité</div>
+      </div>
+      <div class="stats-row">
+        <div class="stat-card"><div class="stat-val" style="color:var(--accent)">${cours.length}</div><div class="stat-lbl">Cours disponibles</div></div>
+        <div class="stat-card"><div class="stat-val" style="color:var(--green)">${fiches.length}</div><div class="stat-lbl">Fiches de révision</div></div>
+        <div class="stat-card"><div class="stat-val" style="color:var(--yellow)">${quiz.length}</div><div class="stat-lbl">Quiz disponibles</div></div>
+        <div class="stat-card"><div class="stat-val" style="color:var(--accent3)">${matieres.length}</div><div class="stat-lbl">Matières</div></div>
+      </div>
+      <div class="section-title">Cours récents</div>
+      <div class="grid-3" style="margin-bottom:2rem">
+        ${cours.slice(0,3).map(c => coursCard(c)).join('') || emptyState('Aucun cours','Aucun cours disponible pour le moment.')}
+      </div>
+      <div class="section-title">Matières disponibles</div>
+      <div style="display:flex;flex-wrap:wrap;gap:.8rem;margin-bottom:2rem">
+        ${matieres.map((m,i) => `<div onclick="showPage('mat-${m}')" style="cursor:pointer;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:.8rem 1.2rem;display:flex;align-items:center;gap:.7rem;transition:all .2s" onmouseover="this.style.borderColor='rgba(0,200,255,.4)'" onmouseout="this.style.borderColor='var(--border)'">
+          <span>${MAT_ICONS[i%MAT_ICONS.length]}</span>
+          <div>
+            <div style="font-weight:700;font-size:.9rem">${m}</div>
+            <div style="font-size:.75rem;color:var(--muted)">${cours.filter(c=>c.matiere===m).length} cours · ${quiz.filter(q=>q.matiere===m).length} quiz</div>
+          </div>
+        </div>`).join('')}
+      </div>
+      <div class="section-title">Derniers quiz</div>
+      <div class="grid-3">
+        ${quiz.slice(0,3).map(q => quizCardStudent(q)).join('') || emptyState('Aucun quiz','Aucun quiz disponible.')}
+      </div>
+    </div>`;
+
+  } else if (id.startsWith('mat-')) {
+    const matNom = id.slice(4);
+    const matCours  = cours.filter(c => c.matiere === matNom);
+    const matFiches = fiches.filter(f => f.matiere === matNom);
+    const matQuiz   = quiz.filter(q => q.matiere === matNom);
+    const idx = getData('matieres').indexOf(matNom);
+    const color = MAT_COLORS[idx >= 0 ? idx % MAT_COLORS.length : 0];
+    const icon  = MAT_ICONS[idx >= 0 ? idx % MAT_ICONS.length : 0];
+
+    main.innerHTML = `
+    <div class="page active">
+      <div class="page-header">
+        <div class="page-title">${icon} <span>${matNom}</span></div>
+        <div class="page-sub">${matCours.length} cours · ${matFiches.length} fiches · ${matQuiz.length} quiz</div>
+      </div>
+      <div class="mat-tab-bar">
+        <div class="mat-tab ${currentMatTab==='cours'?'active':''}" onclick="switchMatTab('mat-${matNom}','cours')">📚 Cours (${matCours.length})</div>
+        <div class="mat-tab ${currentMatTab==='fiches'?'active':''}" onclick="switchMatTab('mat-${matNom}','fiches')">📋 Fiches (${matFiches.length})</div>
+        <div class="mat-tab ${currentMatTab==='quiz'?'active':''}" onclick="switchMatTab('mat-${matNom}','quiz')">🧠 Quiz (${matQuiz.length})</div>
+      </div>
+      <div id="mat-tab-content">
+        ${currentMatTab === 'cours'  ? `<div class="grid-3">${matCours.map(c => coursCard(c)).join('') || emptyState('Aucun cours','Aucun cours pour cette matière.')}</div>` : ''}
+        ${currentMatTab === 'fiches' ? `<div class="grid-2">${matFiches.map(f => ficheCardStudent(f)).join('') || emptyState('Aucune fiche','Aucune fiche pour cette matière.')}</div>` : ''}
+        ${currentMatTab === 'quiz'   ? `<div class="grid-3">${matQuiz.map(q => quizCardStudent(q)).join('') || emptyState('Aucun quiz','Aucun quiz pour cette matière.')}</div>` : ''}
+      </div>
+    </div>`;
+
+  } else if (id === 'fiches') {
+    main.innerHTML = `
+    <div class="page active">
+      <div class="page-header">
+        <div class="page-title">📋 Fiches de <span>révision</span></div>
+        <div class="page-sub">${fiches.length} fiches disponibles</div>
+      </div>
+      <div class="grid-2">${fiches.map(f => ficheCardStudent(f)).join('') || emptyState('Aucune fiche disponible','Votre enseignant n\'a pas encore créé de fiche.')}</div>
+    </div>`;
+
+  } else if (id === 'quiz') {
+    main.innerHTML = `
+    <div class="page active">
+      <div class="page-header">
+        <div class="page-title">🧠 Quiz & <span>Tests</span></div>
+        <div class="page-sub">${quiz.length} quiz disponibles</div>
+      </div>
+      <div class="grid-3">${quiz.map(q => quizCardStudent(q)).join('') || emptyState('Aucun quiz disponible','Votre enseignant n\'a pas encore créé de quiz.')}</div>
+    </div>`;
+  } else {
+    // Fallback
+    renderStudent('dash', main);
+  }
+}
+
+function switchMatTab(pageId, tab) {
+  currentMatTab = tab;
+  renderPage(pageId);
+}
+
+function coursCard(c) {
+  const tag = getMatColor(c.matiere);
+  const hasFile = c.hasFile || !!getFileData(c.id);
+  return `<div class="card">
+    <span class="card-tag ${tag}">${c.matiere}</span>
+    <div class="card-title">${c.titre}</div>
+    <div class="card-meta">📄 ${c.fichier} · ${c.taille} · ${c.date}</div>
+    <div class="card-actions">
+      <button class="btn-sm btn-green" onclick="viewCours(${c.id},'${escapeAttr(c.titre)}')" ${!hasFile?'style="opacity:.5"':''}>👁 Aperçu${!hasFile?' (indispo)':''}</button>
+      <button class="btn-sm btn-blue" onclick="downloadCours(${c.id},'${escapeAttr(c.fichier)}')" ${!hasFile?'style="opacity:.5"':''}>⬇ Télécharger${!hasFile?' (indispo)':''}</button>
+    </div>
+  </div>`;
+}
+function ficheCardStudent(f) {
+  const tag = getMatColor(f.matiere);
+  return `<div class="card">
+    <span class="card-tag ${tag}">${f.matiere}</span>
+    <div class="card-title">${f.titre}</div>
+    <div class="card-meta">📅 ${f.date}</div>
+    <div class="card-actions">
+      <button class="btn-sm btn-blue" onclick="openFiche(${f.id})">📖 Lire la fiche</button>
+    </div>
+  </div>`;
+}
+function quizCardStudent(q) {
+  const tag = getMatColor(q.matiere);
+  return `<div class="card">
+    <span class="card-tag ${tag}">${q.matiere}</span>
+    <div class="card-title">${q.titre}</div>
+    <div class="card-meta">❓ ${q.questions.length} questions · ⏱ ${q.duree} min</div>
+    <div class="card-actions">
+      <button class="btn-sm btn-orange" onclick="startQuiz(${q.id})">▶ Commencer</button>
+    </div>
+  </div>`;
+}
+
+// ════════════════════════════════════════════════════════
+//  RENDER — ADMIN
+// ════════════════════════════════════════════════════════
+function renderAdmin(id, main) {
+  const cours    = getData('cours');
+  const fiches   = getData('fiches');
+  const quiz     = getData('quiz');
+  const matieres = getData('matieres');
+  const etudiants = getData('etudiants');
+
+  const matOptions = matieres.map(m => `<option>${m}</option>`).join('');
+
+  if (id === 'dash') {
+    main.innerHTML = `
+    <div class="page active">
+      <div class="page-header">
+        <div class="page-title">📊 Tableau de <span>bord Admin</span></div>
+        <div class="page-sub">Vue d'ensemble de la plateforme MOS·RÉVIS</div>
+      </div>
+      <div class="stats-row">
+        <div class="stat-card"><div class="stat-val" style="color:var(--accent)">${cours.length}</div><div class="stat-lbl">Cours publiés</div></div>
+        <div class="stat-card"><div class="stat-val" style="color:var(--green)">${fiches.length}</div><div class="stat-lbl">Fiches créées</div></div>
+        <div class="stat-card"><div class="stat-val" style="color:var(--yellow)">${quiz.length}</div><div class="stat-lbl">Quiz créés</div></div>
+        <div class="stat-card"><div class="stat-val" style="color:var(--accent3)">${etudiants.length}</div><div class="stat-lbl">Étudiants</div></div>
+        <div class="stat-card"><div class="stat-val" style="color:var(--green)">${etudiants.filter(e=>!e.firstLogin).length}</div><div class="stat-lbl">Comptes actifs</div></div>
+        <div class="stat-card"><div class="stat-val" style="color:var(--yellow)">${etudiants.filter(e=>e.firstLogin).length}</div><div class="stat-lbl">1ère connexion</div></div>
+      </div>
+      <div class="section-title">Actions rapides</div>
+      <div style="display:flex;gap:1rem;flex-wrap:wrap;margin-bottom:2rem">
+        <button class="btn-save" onclick="showPage('admin-cours')">📁 Ajouter un cours</button>
+        <button class="btn-save" style="background:linear-gradient(135deg,var(--green),#007a55)" onclick="showPage('admin-fiches')">✏️ Créer une fiche</button>
+        <button class="btn-save" style="background:linear-gradient(135deg,var(--accent3),#c04d20)" onclick="showPage('admin-quiz')">⚡ Créer un quiz</button>
+        <button class="btn-save" style="background:linear-gradient(135deg,#a064ff,#6030c0)" onclick="showPage('admin-etudiants')">👥 Gérer les étudiants</button>
+      </div>
+      <div class="section-title">Matières configurées</div>
+      <div style="display:flex;flex-wrap:wrap;gap:.6rem">
+        ${matieres.map((m,i) => `<span class="card-tag ${MAT_COLORS[i%MAT_COLORS.length]}">${MAT_ICONS[i%MAT_ICONS.length]} ${m}</span>`).join('')}
+        <span class="card-tag tag-blue" style="cursor:pointer;opacity:.6" onclick="showPage('admin-matieres')">+ Gérer</span>
+      </div>
+    </div>`;
+
+  } else if (id === 'admin-cours') {
+    main.innerHTML = `
+    <div class="page active">
+      <div class="page-header">
+        <div class="page-title">📁 Gestion des <span>Cours</span></div>
+        <div class="page-sub">Ajoutez et gérez les fichiers de cours — Les fichiers sont stockés localement (Supabase recommandé pour les gros fichiers)</div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:2rem;align-items:start;flex-wrap:wrap">
+        <div>
+          <div class="section-title">Ajouter un cours</div>
+          <div class="admin-form">
+            <div class="form-group">
+              <label>Titre du cours</label>
+              <input type="text" id="nc-titre" placeholder="Ex : Pneumatique avancé" />
+            </div>
+            <div class="form-group">
+              <label>Matière</label>
+              <select id="nc-mat">${matOptions}</select>
+            </div>
+            <div class="form-group">
+              <label>Fichier PDF / Document</label>
+              <div class="file-drop" id="file-drop-zone" onclick="document.getElementById('file-input').click()">
+                <input type="file" id="file-input" accept=".pdf,.docx,.pptx,.jpg,.png" onchange="handleFile(this)">
+                <div class="file-drop-icon">📄</div>
+                <p>Cliquez ou glissez un fichier ici</p>
+                <p style="font-size:.75rem;margin-top:.3rem;color:var(--muted)">PDF, DOCX, PPTX · Max recommandé 5 MB</p>
+              </div>
+              <div id="file-preview" class="file-list"></div>
+            </div>
+            <button class="btn-save" onclick="saveCours()">💾 Publier le cours</button>
+          </div>
+        </div>
+        <div>
+          <div class="section-title">Cours publiés (${cours.length})</div>
+          ${cours.length === 0 ? emptyState('Aucun cours','Ajoutez votre premier cours.') : cours.map(c => `
+            <div class="card" style="margin-bottom:.8rem">
+              <div style="display:flex;align-items:center;gap:.8rem">
+                <span style="font-size:1.5rem">${c.hasFile||getFileData(c.id)?'📄':'🔗'}</span>
+                <div style="flex:1">
+                  <div class="card-title" style="font-size:.95rem">${c.titre}</div>
+                  <div class="card-meta">${c.matiere} · ${c.taille} · ${c.date}</div>
+                  ${c.hasFile||getFileData(c.id)?'<span style="font-size:.72rem;color:var(--green)">✅ Fichier disponible</span>':'<span style="font-size:.72rem;color:var(--muted)">⚠️ Pas de fichier stocké</span>'}
+                </div>
+                <button class="btn-sm btn-red" onclick="deleteCours(${c.id})">🗑</button>
+              </div>
+            </div>`).join('')}
+        </div>
+      </div>
+    </div>`;
+
+  } else if (id === 'admin-fiches') {
+    main.innerHTML = `
+    <div class="page active">
+      <div class="page-header">
+        <div class="page-title">✏️ Créer des <span>Fiches</span></div>
+        <div class="page-sub">Rédigez des fiches de révision structurées pour vos étudiants</div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:2rem;align-items:start">
+        <div>
+          <div class="section-title">Nouvelle fiche</div>
+          <div class="admin-form">
+            <div class="form-group">
+              <label>Titre</label>
+              <input type="text" id="nf-titre" placeholder="Ex: Composants pneumatiques" />
+            </div>
+            <div class="form-group">
+              <label>Matière</label>
+              <select id="nf-mat">${matOptions}</select>
+            </div>
+            <div class="form-group">
+              <label>Contenu de la fiche</label>
+              <textarea id="nf-contenu" rows="10" placeholder="Rédigez le contenu…&#10;&#10;📌 Titre de section&#10;→ Point important&#10;✓ À retenir"></textarea>
+            </div>
+            <button class="btn-save" onclick="saveFiche()">💾 Publier la fiche</button>
+          </div>
+        </div>
+        <div>
+          <div class="section-title">Fiches créées (${fiches.length})</div>
+          ${fiches.length === 0 ? emptyState('Aucune fiche','Créez votre première fiche.') : fiches.map(f => `
+            <div class="card" style="margin-bottom:.8rem">
+              <div style="display:flex;align-items:center;gap:.8rem">
+                <span style="font-size:1.5rem">📋</span>
+                <div style="flex:1">
+                  <div class="card-title" style="font-size:.95rem">${f.titre}</div>
+                  <div class="card-meta">${f.matiere} · ${f.date}</div>
+                </div>
+                <button class="btn-sm btn-blue" onclick="openFiche(${f.id})" style="margin-right:.3rem">👁</button>
+                <button class="btn-sm btn-red" onclick="deleteFiche(${f.id})">🗑</button>
+              </div>
+            </div>`).join('')}
+        </div>
+      </div>
+    </div>`;
+
+  } else if (id === 'admin-quiz') {
+    main.innerHTML = `
+    <div class="page active">
+      <div class="page-header">
+        <div class="page-title">⚡ Créer des <span>Quiz</span></div>
+        <div class="page-sub">Construisez des QCM pour tester vos étudiants</div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:2rem;align-items:start">
+        <div>
+          <div class="section-title">Nouveau quiz</div>
+          <div class="admin-form">
+            <div class="form-group">
+              <label>Titre du quiz</label>
+              <input type="text" id="nq-titre" placeholder="Ex: Quiz Pneumatique Niveau 2" />
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+              <div class="form-group">
+                <label>Matière</label>
+                <select id="nq-mat">${matOptions}</select>
+              </div>
+              <div class="form-group">
+                <label>Durée (min)</label>
+                <input type="text" id="nq-duree" value="10" />
+              </div>
+            </div>
+            <div class="section-title" style="margin-top:1rem">Questions</div>
+            <div id="qb-questions"></div>
+            <button class="add-q-btn" onclick="addQuestion()">+ Ajouter une question</button>
+            <button class="btn-save" style="margin-top:1rem;width:100%" onclick="saveQuiz()">💾 Publier le quiz</button>
+          </div>
+        </div>
+        <div>
+          <div class="section-title">Quiz créés (${quiz.length})</div>
+          ${quiz.length === 0 ? emptyState('Aucun quiz','Créez votre premier quiz.') : quiz.map(q => `
+            <div class="card" style="margin-bottom:.8rem">
+              <div style="display:flex;align-items:center;gap:.8rem">
+                <span style="font-size:1.5rem">🧠</span>
+                <div style="flex:1">
+                  <div class="card-title" style="font-size:.95rem">${q.titre}</div>
+                  <div class="card-meta">${q.matiere} · ${q.questions.length} questions · ${q.duree} min</div>
+                </div>
+                <button class="btn-sm btn-red" onclick="deleteQuiz(${q.id})">🗑</button>
+              </div>
+            </div>`).join('')}
+        </div>
+      </div>
+    </div>`;
+    qbCount = 0;
+    addQuestion(); addQuestion();
+
+  } else if (id === 'admin-matieres') {
+    main.innerHTML = `
+    <div class="page active">
+      <div class="page-header">
+        <div class="page-title">🏷️ Gérer les <span>Matières</span></div>
+        <div class="page-sub">Configurez les matières disponibles pour les étudiants et les cours</div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:2rem;align-items:start">
+        <div>
+          <div class="section-title">Ajouter une matière</div>
+          <div class="admin-form">
+            <div class="form-group">
+              <label>Nom de la matière</label>
+              <input type="text" id="nm-nom" placeholder="Ex: Réseaux informatiques" />
+            </div>
+            <button class="btn-save" onclick="saveMatiere()">➕ Ajouter la matière</button>
+          </div>
+        </div>
+        <div>
+          <div class="section-title">Matières configurées (${matieres.length})</div>
+          ${matieres.length === 0 ? emptyState('Aucune matière','Ajoutez votre première matière.') : matieres.map((m,i) => `
+            <div class="matiere-row">
+              <div class="matiere-dot" style="background:${MAT_DOTS[i%MAT_DOTS.length]}"></div>
+              <span style="font-size:1.2rem">${MAT_ICONS[i%MAT_ICONS.length]}</span>
+              <div style="flex:1">
+                <div style="font-weight:700;font-size:.95rem">${m}</div>
+                <div style="font-size:.75rem;color:var(--muted)">${cours.filter(c=>c.matiere===m).length} cours · ${fiches.filter(f=>f.matiere===m).length} fiches · ${quiz.filter(q=>q.matiere===m).length} quiz</div>
+              </div>
+              <button class="btn-sm btn-red" onclick="deleteMatiere('${escapeAttr(m)}')">🗑 Supprimer</button>
+            </div>`).join('')}
+        </div>
+      </div>
+    </div>`;
+
+  } else if (id === 'admin-etudiants') {
+    main.innerHTML = `
+    <div class="page active">
+      <div class="page-header">
+        <div class="page-title">👥 Gestion des <span>Étudiants</span></div>
+        <div class="page-sub">Créez des comptes étudiants avec mot de passe provisoire</div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:2rem;align-items:start">
+        <div>
+          <div class="section-title">Créer un compte étudiant</div>
+          <div class="admin-form">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+              <div class="form-group">
+                <label>Prénom</label>
+                <input type="text" id="ne-prenom" placeholder="Jean" />
+              </div>
+              <div class="form-group">
+                <label>Nom</label>
+                <input type="text" id="ne-nom" placeholder="Dupont" />
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Identifiant de connexion</label>
+              <input type="text" id="ne-user" placeholder="jdupont" />
+            </div>
+            <div class="form-group">
+              <label>Mot de passe provisoire</label>
+              <input type="text" id="ne-pass" placeholder="mos2024" value="mos2024" />
+              <div style="font-size:.75rem;color:var(--muted);margin-top:.4rem">⚠️ L'étudiant sera invité à changer ce mot de passe à la première connexion</div>
+            </div>
+            <button class="btn-save" onclick="saveEtudiant()">✅ Créer le compte</button>
+          </div>
+        </div>
+        <div>
+          <div class="section-title">Étudiants inscrits (${etudiants.length})</div>
+          ${etudiants.length === 0 ? emptyState('Aucun étudiant','Créez le premier compte étudiant.') : etudiants.map(e => `
+            <div class="student-row">
+              <div class="student-avatar-sm">${(e.prenom[0]+e.nom[0]).toUpperCase()}</div>
+              <div class="student-info">
+                <div class="student-name">${e.prenom} ${e.nom}</div>
+                <div class="student-meta">@${e.username} ${e.firstLogin ? '· MDP prov: ' + e.tempPass : ''}</div>
+              </div>
+              <span class="status-badge ${e.firstLogin ? 'status-first' : 'status-active'}">${e.firstLogin ? '⏳ 1ère connexion' : '✅ Actif'}</span>
+              <button class="btn-sm btn-yellow" onclick="resetEtudiant(${e.id})" title="Réinitialiser le mot de passe">🔄</button>
+              <button class="btn-sm btn-red" onclick="deleteEtudiant(${e.id})">🗑</button>
+            </div>`).join('')}
+          <div style="margin-top:1rem;padding:1rem;background:rgba(0,200,255,.05);border:1px solid rgba(0,200,255,.2);border-radius:8px;font-size:.82rem;color:var(--muted)">
+            🔄 Le bouton réinitialiser remet le mot de passe provisoire et force une nouvelle 1ère connexion.
+          </div>
+        </div>
+      </div>
+    </div>`;
+
+  } else if (id === 'admin-compte') {
+    const creds = getAdminCreds();
+    main.innerHTML = `
+    <div class="page active">
+      <div class="page-header">
+        <div class="page-title">🔐 Mon <span>Compte Admin</span></div>
+        <div class="page-sub">Modifiez vos identifiants de connexion administrateur</div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:2rem;align-items:start">
+        <div>
+          <div class="section-title">Modifier l'identifiant</div>
+          <div class="admin-form" style="margin-bottom:1.5rem">
+            <div class="form-group">
+              <label>Identifiant actuel</label>
+              <input type="text" value="${creds.user}" disabled style="opacity:.5;cursor:not-allowed" />
+            </div>
+            <div class="form-group">
+              <label>Nom affiché (sidebar)</label>
+              <input type="text" id="new-admin-name" value="${creds.name}" placeholder="Ex : M. Dupont" />
+            </div>
+            <div class="form-group">
+              <label>Nouvel identifiant de connexion</label>
+              <input type="text" id="new-admin-user" placeholder="Laissez vide pour ne pas changer" />
+            </div>
+            <button class="btn-save" style="background:linear-gradient(135deg,#a064ff,#6030c0)" onclick="saveAdminIdentifiant()">💾 Enregistrer l'identifiant</button>
+          </div>
+
+          <div class="section-title">Modifier le mot de passe</div>
+          <div class="admin-form">
+            <div class="form-group">
+              <label>Mot de passe actuel</label>
+              <input type="password" id="old-admin-pass" placeholder="Votre mot de passe actuel" />
+            </div>
+            <div class="form-group">
+              <label>Nouveau mot de passe</label>
+              <input type="password" id="new-admin-pass" placeholder="Minimum 6 caractères" />
+            </div>
+            <div class="form-group">
+              <label>Confirmer le nouveau mot de passe</label>
+              <input type="password" id="confirm-admin-pass" placeholder="Répétez le nouveau mot de passe" />
+            </div>
+            <div id="admin-pass-err" style="color:var(--red);font-size:.82rem;margin-bottom:.8rem;display:none"></div>
+            <button class="btn-save" onclick="saveAdminPassword()">🔒 Changer le mot de passe</button>
+          </div>
+        </div>
+
+        <div>
+          <div class="section-title">Identifiants actuels</div>
+          <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1.5rem">
+            <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1.2rem">
+              <div class="user-avatar admin" style="width:52px;height:52px;font-size:1.1rem">AD</div>
+              <div>
+                <div style="font-weight:700;font-size:1.05rem">${creds.name}</div>
+                <div style="font-size:.8rem;color:var(--muted);font-family:var(--font-mono)">Administrateur</div>
+              </div>
+            </div>
+            <div style="background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:1rem;font-family:var(--font-mono);font-size:.82rem">
+              <div style="margin-bottom:.5rem">👤 Identifiant : <span style="color:var(--accent)">${creds.user}</span></div>
+              <div>🔒 Mot de passe : <span style="color:var(--muted)">••••••••</span></div>
+            </div>
+            <div style="margin-top:1.2rem;padding:.9rem;background:rgba(255,107,53,.07);border:1px solid rgba(255,107,53,.2);border-radius:8px;font-size:.82rem;color:var(--muted);line-height:1.6">
+              ⚠️ <strong style="color:var(--accent3)">Important :</strong> Après avoir changé vos identifiants, notez-les soigneusement. Si vous perdez votre mot de passe, vous devrez modifier directement le fichier HTML.
+            </div>
+            <div style="margin-top:1rem;padding:.9rem;background:rgba(0,200,255,.05);border:1px solid rgba(0,200,255,.15);border-radius:8px;font-size:.82rem;color:var(--muted);line-height:1.6">
+              💡 Les identifiants sont sauvegardés dans le <strong style="color:var(--accent)">localStorage</strong> de votre navigateur. Pour une sécurité maximale, utilisez Supabase Auth.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>`;
+
+  } else if (id === 'admin-supabase') {
+    const sbUrl = localStorage.getItem('mos_sb_url') || '';
+    const sbKey = localStorage.getItem('mos_sb_key') || '';
+    main.innerHTML = `
+    <div class="page active">
+      <div class="page-header">
+        <div class="page-title">🗄️ Sauvegarde <span>Supabase</span></div>
+        <div class="page-sub">Connectez votre base de données pour une persistance durable des données</div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:2rem;align-items:start;margin-bottom:2rem">
+        <div>
+          <div class="section-title">Configuration Supabase</div>
+          <div class="admin-form">
+            <div class="form-group">
+              <label>URL du projet Supabase</label>
+              <input type="text" id="sb-url" placeholder="https://xxxxxxxxxxxx.supabase.co" value="${sbUrl}" />
+            </div>
+            <div class="form-group">
+              <label>Clé publique (anon key)</label>
+              <input type="text" id="sb-key" placeholder="eyJhbGciOiJIUzI1NiIsInR5c..." value="${sbKey}" />
+            </div>
+            <button class="btn-save" onclick="saveSbConfig()">💾 Enregistrer la configuration</button>
+            ${sbUrl ? `<div style="margin-top:1rem;color:var(--green);font-size:.85rem">✅ Configuration enregistrée</div>` : ''}
+          </div>
+        </div>
+        <div>
+          <div class="section-title">État de la synchronisation</div>
+          <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1.5rem">
+            ${sbUrl ? `<div style="color:var(--green);margin-bottom:1rem">🟢 Supabase configuré</div>` : `<div style="color:var(--yellow);margin-bottom:1rem">🟡 Supabase non configuré — utilisation du localStorage uniquement</div>`}
+            <div style="font-size:.85rem;color:var(--muted);line-height:1.7">
+              Sans Supabase, toutes les données (cours, fiches, quiz, comptes) sont stockées dans le navigateur. Elles seront perdues si le cache est effacé.<br><br>
+              Avec Supabase, les données sont sauvegardées dans le cloud et accessibles depuis n'importe quel appareil.
+            </div>
+            <div style="margin-top:1rem;display:flex;gap:.6rem;flex-wrap:wrap">
+              <button class="btn-sm btn-blue" onclick="exportData()">⬇ Exporter JSON</button>
+              <button class="btn-sm btn-green" onclick="document.getElementById('import-input').click()">⬆ Importer JSON</button>
+              <input type="file" id="import-input" accept=".json" style="display:none" onchange="importData(this)">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-title">Guide d'installation Supabase — Étape par étape</div>
+
+      <div class="sb-step">
+        <div class="sb-step-num">Étape 1</div>
+        <h3>Créer un compte Supabase</h3>
+        <p>Rendez-vous sur <a href="https://supabase.com" target="_blank" class="sb-link">supabase.com</a> et créez un compte gratuit. Créez ensuite un nouveau projet (choisissez une région proche de la France).</p>
+      </div>
+
+      <div class="sb-step">
+        <div class="sb-step-num">Étape 2</div>
+        <h3>Récupérer vos clés API</h3>
+        <p>Dans votre projet Supabase → <strong>Settings → API</strong>. Copiez :<br>• <strong>Project URL</strong> → collez dans le champ URL ci-dessus<br>• <strong>anon public key</strong> → collez dans le champ Clé ci-dessus</p>
+      </div>
+
+      <div class="sb-step">
+        <div class="sb-step-num">Étape 3</div>
+        <h3>Créer les tables — Exécutez ce SQL dans l'éditeur SQL Supabase</h3>
+        <p>Dans votre projet → <strong>SQL Editor → New Query</strong>, copiez-collez et exécutez :</p>
+        <div class="code-block">-- Matières
+CREATE TABLE matieres (
+  id SERIAL PRIMARY KEY,
+  nom TEXT NOT NULL UNIQUE,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- Cours
+CREATE TABLE cours (
+  id SERIAL PRIMARY KEY,
+  titre TEXT NOT NULL,
+  matiere TEXT,
+  fichier TEXT,
+  fichier_url TEXT,
+  taille TEXT,
+  date TEXT,
+  has_file BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- Fiches de révision
+CREATE TABLE fiches (
+  id SERIAL PRIMARY KEY,
+  titre TEXT NOT NULL,
+  matiere TEXT,
+  contenu TEXT,
+  date TEXT,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- Quiz
+CREATE TABLE quiz (
+  id SERIAL PRIMARY KEY,
+  titre TEXT NOT NULL,
+  matiere TEXT,
+  duree INTEGER DEFAULT 10,
+  questions JSONB,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- Étudiants
+CREATE TABLE etudiants (
+  id SERIAL PRIMARY KEY,
+  nom TEXT NOT NULL,
+  prenom TEXT NOT NULL,
+  username TEXT UNIQUE NOT NULL,
+  temp_pass TEXT,
+  password TEXT,
+  first_login BOOLEAN DEFAULT TRUE,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- Activer RLS (Row Level Security) - optionnel pour démo
+-- ALTER TABLE cours ENABLE ROW LEVEL SECURITY;</div>
+      </div>
+
+      <div class="sb-step">
+        <div class="sb-step-num">Étape 4</div>
+        <h3>Créer un bucket de stockage pour les fichiers</h3>
+        <p>Dans votre projet → <strong>Storage → New Bucket</strong><br>• Nom : <code style="color:var(--accent)">cours-files</code><br>• Cochez "Public bucket" pour un accès simplifié<br><br>Les fichiers de cours (PDF, DOCX) seront stockés dans ce bucket.</p>
+      </div>
+
+      <div class="sb-step">
+        <div class="sb-step-num">Étape 5</div>
+        <h3>Adapter le code pour utiliser Supabase</h3>
+        <p>Ajoutez le SDK Supabase dans la balise &lt;head&gt; de ce fichier :</p>
+        <div class="code-block">&lt;script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"&gt;&lt;/script&gt;</div>
+        <p style="margin-top:.8rem">Puis initialisez le client et remplacez les fonctions getData/setData :</p>
+        <div class="code-block">const { createClient } = supabase;
+const sb = createClient('VOTRE_URL', 'VOTRE_ANON_KEY');
+
+// Exemple : charger les cours depuis Supabase
+async function loadCours() {
+  const { data, error } = await sb.from('cours').select('*');
+  if (error) { console.error(error); return []; }
+  return data;
+}
+
+// Exemple : sauvegarder un cours
+async function insertCours(cours) {
+  const { data, error } = await sb.from('cours').insert(cours);
+  return { data, error };
+}
+
+// Exemple : uploader un fichier PDF
+async function uploadFile(file, coursId) {
+  const { data, error } = await sb.storage
+    .from('cours-files')
+    .upload('cours/' + coursId + '/' + file.name, file);
+  if (error) return null;
+  const { data: urlData } = sb.storage.from('cours-files').getPublicUrl(data.path);
+  return urlData.publicUrl;
+}</div>
+      </div>
+
+      <div class="sb-step">
+        <div class="sb-step-num">Étape 6</div>
+        <h3>Migrer les données existantes</h3>
+        <p>Utilisez le bouton <strong>Exporter JSON</strong> ci-dessus pour télécharger toutes vos données actuelles, puis importez-les dans vos tables Supabase via l'interface ou via un script. Vous pouvez aussi utiliser le <strong>Table Editor</strong> de Supabase pour saisir les données manuellement.</p>
+      </div>
+
+      <div style="background:rgba(0,229,160,.05);border:1px solid rgba(0,229,160,.2);border-radius:10px;padding:1rem 1.2rem;margin-top:1rem;font-size:.85rem;color:var(--muted)">
+        💡 <strong style="color:var(--green)">Astuce :</strong> Pour une solution encore plus simple sans coder, vous pouvez utiliser le bouton "Exporter JSON" comme sauvegarde manuelle régulière, et "Importer JSON" pour restaurer vos données sur un autre appareil.
+      </div>
+    </div>`;
+  }
+}
+
+// ════════════════════════════════════════════════════════
+//  QUIZ LOGIC
+// ════════════════════════════════════════════════════════
+function startQuiz(id) {
+  const q = getData('quiz').find(q => q.id === id);
+  if (!q) return;
+  activeQuiz = q; currentQ = 0; answers = Array(q.questions.length).fill(null);
+  renderQuizModal();
+  document.getElementById('quiz-modal').classList.add('open');
+}
+function renderQuizModal() {
+  const q = activeQuiz.questions[currentQ];
+  const letters = ['A','B','C','D'];
+  document.getElementById('quiz-modal-content').innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem">
+      <div style="font-family:var(--font-head);font-weight:900;font-size:1.2rem">${activeQuiz.titre}</div>
+      <span class="card-tag tag-yellow" style="margin:0">${currentQ+1}/${activeQuiz.questions.length}</span>
+    </div>
+    <div class="progress-wrap"><div class="progress-bar" style="width:${((currentQ+1)/activeQuiz.questions.length)*100}%"></div></div>
+    <div class="quiz-q-card">
+      <div class="quiz-q-num">Question ${currentQ+1}</div>
+      <div class="quiz-q-text">${q.texte}</div>
+      <div class="quiz-options">
+        ${q.options.map((opt,i) => `
+          <div class="quiz-option ${answers[currentQ]===i?'selected':''}" onclick="selectAnswer(${i})">
+            <span class="quiz-option-letter">${letters[i]}</span>${opt}
+          </div>`).join('')}
+      </div>
+    </div>
+    <div class="quiz-nav">
+      ${currentQ>0?`<button class="btn-sm btn-blue" onclick="prevQ()">← Précédente</button>`:''}
+      ${currentQ<activeQuiz.questions.length-1
+        ?`<button class="btn-sm btn-orange" onclick="nextQ()" ${answers[currentQ]===null?'disabled style="opacity:.4;cursor:not-allowed"':''}>Suivante →</button>`
+        :`<button class="btn-sm btn-green" onclick="finishQuiz()" ${answers[currentQ]===null?'disabled style="opacity:.4;cursor:not-allowed"':''}>✅ Terminer</button>`}
+    </div>`;
+}
+function selectAnswer(i) { answers[currentQ]=i; renderQuizModal(); }
+function nextQ() { if(currentQ<activeQuiz.questions.length-1){currentQ++;renderQuizModal();} }
+function prevQ() { if(currentQ>0){currentQ--;renderQuizModal();} }
+function finishQuiz() {
+  const score = answers.filter((a,i)=>a===activeQuiz.questions[i].correct).length;
+  const total = activeQuiz.questions.length;
+  const pct = Math.round((score/total)*100);
+  const cls = pct>=80?'good':pct>=50?'medium':'bad';
+  const msg = pct>=80?'Excellent ! 🏆':pct>=50?'Bien joué ! 💪':'À retravailler 📖';
+  document.getElementById('quiz-modal-content').innerHTML = `
+    <div style="text-align:center;padding:1rem">
+      <div style="font-family:var(--font-head);font-weight:900;font-size:1.3rem;margin-bottom:1.5rem">Résultats — ${activeQuiz.titre}</div>
+      <div class="score-big ${cls}">${score}/${total}</div>
+      <div style="font-size:1.1rem;margin:.5rem 0;color:var(--muted)">${pct}% de réussite</div>
+      <div style="font-size:1.3rem;margin:1rem 0">${msg}</div>
+      <div class="progress-wrap" style="max-width:300px;margin:0 auto 1.5rem">
+        <div class="progress-bar" style="width:${pct}%;background:${pct>=80?'var(--green)':pct>=50?'var(--yellow)':'var(--red)'}"></div>
+      </div>
+      <div style="margin-bottom:1.5rem">
+        ${activeQuiz.questions.map((q,i)=>`
+          <div style="text-align:left;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:.8rem;margin-bottom:.5rem">
+            <div style="font-size:.85rem;font-weight:600;margin-bottom:.3rem">${q.texte}</div>
+            <div style="font-size:.8rem;color:${answers[i]===q.correct?'var(--green)':'var(--red)'}">
+              ${answers[i]===q.correct?'✅':'❌'} ${answers[i]!==null?q.options[answers[i]]:'Sans réponse'}
+              ${answers[i]!==q.correct?`<span style="color:var(--muted)"> → Bonne: ${q.options[q.correct]}</span>`:''}
+            </div>
+          </div>`).join('')}
+      </div>
+      <button class="btn-save" onclick="closeModal('quiz-modal')">Fermer</button>
+    </div>`;
+}
+
+// ════════════════════════════════════════════════════════
+//  FICHE
+// ════════════════════════════════════════════════════════
+function openFiche(id) {
+  const f = getData('fiches').find(f=>f.id===id);
+  if (!f) return;
+  document.getElementById('fiche-modal-content').innerHTML = `
+    <span class="card-tag ${getMatColor(f.matiere)}">${f.matiere}</span>
+    <div class="fiche-title-display">${f.titre}</div>
+    <div style="color:var(--muted);font-size:.8rem;margin-bottom:1.5rem">📅 ${f.date}</div>
+    <div class="fiche-content-display">${f.contenu}</div>`;
+  document.getElementById('fiche-modal').classList.add('open');
+}
+
+// ════════════════════════════════════════════════════════
+//  FICHIERS COURS (vue + téléchargement)
+// ════════════════════════════════════════════════════════
+function viewCours(id, titre) {
+  const data = getFileData(id);
+  if (!data) { showToast('⚠️ Aucun fichier disponible — uploadez un fichier via l\'espace admin'); return; }
+  document.getElementById('cours-viewer-title').textContent = titre;
+  document.getElementById('cours-viewer-iframe').src = data;
+  document.getElementById('cours-viewer-modal').classList.add('open');
+}
+function downloadCours(id, filename) {
+  const data = getFileData(id);
+  if (!data) { showToast('⚠️ Aucun fichier disponible — uploadez un fichier via l\'espace admin'); return; }
+  const a = document.createElement('a');
+  a.href = data; a.download = filename;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+}
+
+// ════════════════════════════════════════════════════════
+//  ADMIN — SAVE/DELETE
+// ════════════════════════════════════════════════════════
+function handleFile(input) {
+  const f = input.files[0];
+  if (!f) return;
+  pendingFile = f;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    pendingFileData = e.target.result;
+    document.getElementById('file-preview').innerHTML = `
+      <div class="file-item">
+        <span class="file-item-icon">📄</span>
+        <div class="file-item-info">
+          <div class="file-item-name">${f.name}</div>
+          <div class="file-item-size">${(f.size/1024/1024).toFixed(2)} MB ${f.size > 4*1024*1024 ? '⚠️ Fichier volumineux' : '✅'}</div>
+        </div>
+        <button class="btn-sm btn-red" onclick="pendingFile=null;pendingFileData=null;document.getElementById('file-preview').innerHTML=''">✕</button>
+      </div>`;
+  };
+  reader.readAsDataURL(f);
+}
+
+function saveCours() {
+  const titre = document.getElementById('nc-titre').value.trim();
+  const mat   = document.getElementById('nc-mat').value;
+  if (!titre) { customAlert('Veuillez entrer un titre pour le cours.', '⚠️'); return; }
+  const id = Date.now();
+  const cours = getData('cours');
+  cours.push({ id, titre, matiere:mat, fichier:pendingFile?pendingFile.name:'(sans fichier)', taille:pendingFile?`${(pendingFile.size/1024/1024).toFixed(1)} MB`:'—', date:new Date().toLocaleDateString('fr-FR'), hasFile:!!pendingFileData });
+  setData('cours', cours);
+  if (pendingFileData) {
+    const ok = setFileData(id, pendingFileData);
+    if (!ok) showToast('⚠️ Fichier trop volumineux pour le stockage local — utilisez Supabase Storage');
+  }
+  pendingFile = null; pendingFileData = null;
+  showToast('✅ Cours publié avec succès !');
+  buildSidebar(); showPage('admin-cours');
+}
+function saveFiche() {
+  const titre   = document.getElementById('nf-titre').value.trim();
+  const mat     = document.getElementById('nf-mat').value;
+  const contenu = document.getElementById('nf-contenu').value.trim();
+  if (!titre||!contenu) { customAlert('Veuillez remplir le titre et le contenu.', '⚠️'); return; }
+  const fiches = getData('fiches');
+  fiches.push({ id:Date.now(), titre, matiere:mat, contenu, date:new Date().toLocaleDateString('fr-FR') });
+  setData('fiches', fiches);
+  showToast('✅ Fiche publiée !'); showPage('admin-fiches');
+}
+function addQuestion() {
+  const container = document.getElementById('qb-questions');
+  if (!container) return;
+  qbCount++;
+  const div = document.createElement('div');
+  div.className='quiz-builder-q'; div.id=`qb-${qbCount}`;
+  div.innerHTML=`
+    <button class="qb-remove" onclick="document.getElementById('qb-${qbCount}').remove()">✕</button>
+    <input type="text" placeholder="Texte de la question ${qbCount}…" name="q-text-${qbCount}" />
+    <div class="qb-options">
+      ${['A','B','C','D'].map((l,i)=>`
+        <div class="qb-option-wrap">
+          <input type="radio" name="correct-${qbCount}" value="${i}" id="r${qbCount}-${i}">
+          <label for="r${qbCount}-${i}" class="qb-option-label">${l}:</label>
+          <input type="text" placeholder="Option ${l}" name="opt-${qbCount}-${i}" />
+        </div>`).join('')}
+    </div>
+    <div style="font-size:.75rem;color:var(--muted);font-family:var(--font-mono)">◉ Sélectionnez la bonne réponse</div>`;
+  container.appendChild(div);
+}
+function saveQuiz() {
+  const titre = document.getElementById('nq-titre').value.trim();
+  const mat   = document.getElementById('nq-mat').value;
+  const duree = parseInt(document.getElementById('nq-duree').value)||10;
+  if (!titre) { customAlert('Veuillez entrer un titre pour le quiz.', '⚠️'); return; }
+  const questions=[];
+  document.querySelectorAll('.quiz-builder-q').forEach(div=>{
+    const id=div.id.split('-')[1];
+    const texte=div.querySelector(`input[name="q-text-${id}"]`)?.value.trim();
+    const opts=[0,1,2,3].map(i=>div.querySelector(`input[name="opt-${id}-${i}"]`)?.value.trim()||`Option ${i+1}`);
+    const corr=parseInt(div.querySelector(`input[name="correct-${id}"]:checked`)?.value??0);
+    if (texte) questions.push({texte,options:opts,correct:corr});
+  });
+  if (questions.length===0) { customAlert('Ajoutez au moins une question avec un texte.', '⚠️'); return; }
+  const quiz=getData('quiz');
+  quiz.push({id:Date.now(),titre,matiere:mat,duree,questions});
+  setData('quiz',quiz); qbCount=0;
+  showToast('✅ Quiz publié !'); showPage('admin-quiz');
+}
+function customConfirm(title, msg, icon, onConfirm) {
+  document.getElementById('confirm-title').textContent = title;
+  document.getElementById('confirm-msg').textContent   = msg;
+  document.getElementById('confirm-icon').textContent  = icon || '⚠️';
+  const btn = document.getElementById('confirm-ok');
+  // Cloner pour supprimer les anciens listeners
+  const newBtn = btn.cloneNode(true);
+  btn.parentNode.replaceChild(newBtn, btn);
+  newBtn.addEventListener('click', () => { closeModal('confirm-modal'); onConfirm(); });
+  document.getElementById('confirm-modal').classList.add('open');
+}
+function customAlert(msg, icon) {
+  document.getElementById('alert-msg').textContent  = msg;
+  document.getElementById('alert-icon').textContent = icon || 'ℹ️';
+  document.getElementById('alert-modal').classList.add('open');
+}
+
+function deleteCours(id) {
+  customConfirm('Supprimer ce cours ?', 'Cette action est irréversible. Le fichier associé sera également supprimé.', '🗑️', () => {
+    setData('cours', getData('cours').filter(c => c.id !== id));
+    delFileData(id); showToast('🗑 Cours supprimé'); showPage('admin-cours');
+  });
+}
+function deleteFiche(id) {
+  customConfirm('Supprimer cette fiche ?', 'Cette fiche de révision sera définitivement supprimée.', '🗑️', () => {
+    setData('fiches', getData('fiches').filter(f => f.id !== id));
+    showToast('🗑 Fiche supprimée'); showPage('admin-fiches');
+  });
+}
+function deleteQuiz(id) {
+  customConfirm('Supprimer ce quiz ?', 'Ce quiz et toutes ses questions seront définitivement supprimés.', '🗑️', () => {
+    setData('quiz', getData('quiz').filter(q => q.id !== id));
+    showToast('🗑 Quiz supprimé'); showPage('admin-quiz');
+  });
+}
+
+// ── MATIÈRES ──
+function saveMatiere() {
+  const nom = document.getElementById('nm-nom').value.trim();
+  if (!nom) { customAlert('Veuillez entrer un nom de matière.', '⚠️'); return; }
+  const matieres = getData('matieres');
+  if (matieres.includes(nom)) { customAlert('Cette matière existe déjà.', '⚠️'); return; }
+  matieres.push(nom); setData('matieres', matieres);
+  buildSidebar(); showToast('✅ Matière ajoutée !'); showPage('admin-matieres');
+}
+function deleteMatiere(nom) {
+  customConfirm(`Supprimer "${nom}" ?`, 'Les cours, fiches et quiz liés à cette matière ne seront pas supprimés, mais la matière disparaîtra de la navigation.', '🏷️', () => {
+    const matieres = getData('matieres').filter(m => m !== nom);
+    setData('matieres', matieres);
+    buildSidebar(); showToast('🗑 Matière supprimée'); showPage('admin-matieres');
+  });
+}
+
+// ── ÉTUDIANTS ──
+function saveEtudiant() {
+  const prenom = document.getElementById('ne-prenom').value.trim();
+  const nom    = document.getElementById('ne-nom').value.trim();
+  const user   = document.getElementById('ne-user').value.trim().toLowerCase();
+  const pass   = document.getElementById('ne-pass').value.trim();
+  if (!prenom||!nom||!user||!pass) { customAlert('Veuillez remplir tous les champs.', '⚠️'); return; }
+  const etudiants = getData('etudiants');
+  if (etudiants.find(e => e.username === user)) { customAlert('Cet identifiant est déjà utilisé. Choisissez-en un autre.', '⚠️'); return; }
+  etudiants.push({ id:Date.now(), nom, prenom, username:user, tempPass:pass, password:null, firstLogin:true });
+  setData('etudiants', etudiants); showToast('✅ Compte créé !'); showPage('admin-etudiants');
+}
+function deleteEtudiant(id) {
+  customConfirm('Supprimer ce compte ?', 'Le compte étudiant sera définitivement supprimé. L\'étudiant ne pourra plus se connecter.', '👤', () => {
+    setData('etudiants', getData('etudiants').filter(e => e.id !== id));
+    showToast('🗑 Compte supprimé'); showPage('admin-etudiants');
+  });
+}
+function resetEtudiant(id) {
+  customConfirm('Réinitialiser le mot de passe ?', 'L\'étudiant devra créer un nouveau mot de passe à sa prochaine connexion avec son MDP provisoire.', '🔄', () => {
+    const etudiants = getData('etudiants');
+    const idx = etudiants.findIndex(e => e.id === id);
+    if (idx !== -1) { etudiants[idx].password = null; etudiants[idx].firstLogin = true; setData('etudiants', etudiants); }
+    showToast('🔄 Mot de passe réinitialisé'); showPage('admin-etudiants');
+  });
+}
+
+// ── COMPTE ADMIN ──
+function saveAdminIdentifiant() {
+  const newName = document.getElementById('new-admin-name').value.trim();
+  const newUser = document.getElementById('new-admin-user').value.trim().toLowerCase();
+  if (newName) localStorage.setItem('mos_admin_name', newName);
+  if (newUser) {
+    if (newUser.length < 3) { customAlert('L\'identifiant doit faire au moins 3 caractères.', '⚠️'); return; }
+    localStorage.setItem('mos_admin_user', newUser);
+  }
+  // Rafraîchir le nom dans la sidebar
+  document.getElementById('sb-name').textContent = getAdminCreds().name;
+  showToast('✅ Identifiant mis à jour !');
+  showPage('admin-compte');
+}
+function saveAdminPassword() {
+  const oldPass     = document.getElementById('old-admin-pass').value;
+  const newPass     = document.getElementById('new-admin-pass').value;
+  const confirmPass = document.getElementById('confirm-admin-pass').value;
+  const err         = document.getElementById('admin-pass-err');
+  err.style.display = 'none';
+
+  const creds = getAdminCreds();
+  if (oldPass !== creds.pass) {
+    err.textContent = '❌ Mot de passe actuel incorrect.'; err.style.display = 'block'; return;
+  }
+  if (newPass.length < 6) {
+    err.textContent = '❌ Le nouveau mot de passe doit faire au moins 6 caractères.'; err.style.display = 'block'; return;
+  }
+  if (newPass !== confirmPass) {
+    err.textContent = '❌ Les mots de passe ne correspondent pas.'; err.style.display = 'block'; return;
+  }
+  localStorage.setItem('mos_admin_pass', newPass);
+  showToast('🔒 Mot de passe changé avec succès !');
+  showPage('admin-compte');
+}
+
+// ── SUPABASE CONFIG ──
+function saveSbConfig() {
+  const url = document.getElementById('sb-url').value.trim();
+  const key = document.getElementById('sb-key').value.trim();
+  localStorage.setItem('mos_sb_url', url);
+  localStorage.setItem('mos_sb_key', key);
+  showToast('✅ Configuration Supabase enregistrée !');
+  showPage('admin-supabase');
+}
+
+// ── EXPORT / IMPORT JSON ──
+function exportData() {
+  const data = {
+    matieres: getData('matieres'),
+    etudiants: getData('etudiants'),
+    cours: getData('cours'),
+    fiches: getData('fiches'),
+    quiz: getData('quiz'),
+    exported_at: new Date().toISOString()
+  };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'mos_backup_' + new Date().toLocaleDateString('fr-FR').replace(/\//g,'-') + '.json';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  showToast('⬇ Export JSON téléchargé !');
+}
+function importData(input) {
+  const f = input.files[0]; if (!f) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (data.matieres)  setData('matieres',  data.matieres);
+      if (data.etudiants) setData('etudiants', data.etudiants);
+      if (data.cours)     setData('cours',     data.cours);
+      if (data.fiches)    setData('fiches',    data.fiches);
+      if (data.quiz)      setData('quiz',      data.quiz);
+      buildSidebar(); showToast('✅ Données importées avec succès !');
+      showPage('admin-supabase');
+    } catch(err) { alert('Erreur lors de l\'import : fichier JSON invalide.'); }
+  };
+  reader.readAsText(f);
+}
+
+// ════════════════════════════════════════════════════════
+//  HELPERS
+// ════════════════════════════════════════════════════════
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+function showToast(msg='✅ Enregistré avec succès !') {
+  const t=document.getElementById('toast'); t.textContent=msg; t.style.display='block';
+  setTimeout(()=>t.style.display='none',2800);
+}
+function emptyState(title, sub) {
+  return `<div class="empty-state"><div class="es-icon">📭</div><strong>${title}</strong><p>${sub}</p></div>`;
+}
+function escapeAttr(str) {
+  return String(str).replace(/'/g,'\\\'').replace(/"/g,'&quot;');
+}
+
+// ════════════════════════════════════════════════════════
+//  EVENT LISTENERS
+// ════════════════════════════════════════════════════════
+document.querySelectorAll('.modal-overlay').forEach(el => {
+  el.addEventListener('click', e => { if(e.target===el) el.classList.remove('open'); });
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+  const zone = document.getElementById('file-drop-zone');
+  if (zone) {
+    zone.addEventListener('dragover', e=>{e.preventDefault();zone.classList.add('dragover');});
+    zone.addEventListener('dragleave',()=>zone.classList.remove('dragover'));
+    zone.addEventListener('drop', e=>{
+      e.preventDefault(); zone.classList.remove('dragover');
+      const f=e.dataTransfer.files[0];
+      if(f){ const inp=document.getElementById('file-input'); const dt=new DataTransfer(); dt.items.add(f); inp.files=dt.files; handleFile(inp); }
+    });
+  }
+});
+</script>
+</body>
+</html>
