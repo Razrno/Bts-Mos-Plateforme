@@ -262,7 +262,7 @@
   /* ── SIDEBAR OVERLAY (caché sur PC) ── */
   .sidebar-overlay{
     display:none; position:fixed; inset:0; background:rgba(0,0,0,.6);
-    z-index:190; opacity:0; transition:opacity .3s;
+    z-index:190; opacity:0; pointer-events:none; transition:opacity .3s;
   }
 
   /* ── MOBILE BOTTOM NAV (caché sur PC) ── */
@@ -299,7 +299,7 @@
       box-shadow: 4px 0 24px rgba(0,0,0,.5);
     }
     .sidebar.mob-open { transform: translateX(0); }
-    .sidebar-overlay  { display: block; }
+    .sidebar-overlay  { display: block; pointer-events: none; }
     .sidebar-overlay.active { opacity: 1; pointer-events: all; }
 
     /* Bouton fermer la sidebar ── */
