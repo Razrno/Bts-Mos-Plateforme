@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>MOS·RÉVIS — Plateforme BTS MOS</title>
 <link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@300;400;600;700;900&family=Source+Code+Pro:wght@400;600&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <style>
   :root {
     --bg:#0a0e1a; --bg2:#0f1525; --bg3:#151c2e; --card:#1a2236;
@@ -377,28 +378,76 @@
     .success-toast { bottom: 70px; right: 1rem; left: 1rem; text-align: center; }
   }
 
-  /* ── AVATAR UPLOAD ── */
-  .avatar-upload-zone{position:relative;width:130px;height:130px;border-radius:50%;cursor:pointer;flex-shrink:0;}
-  .avatar-upload-zone img,.avatar-preview-circle{width:130px;height:130px;border-radius:50%;object-fit:cover;border:3px solid var(--border);display:block;transition:filter .2s;}
-  .avatar-upload-zone:hover img,.avatar-upload-zone:hover .avatar-preview-circle{filter:brightness(.6);}
-  .avatar-upload-overlay{position:absolute;inset:0;border-radius:50%;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .2s;background:rgba(0,0,0,.5);flex-direction:column;gap:.2rem;color:#fff;font-size:.72rem;font-family:var(--font-mono);}
-  .avatar-upload-zone:hover .avatar-upload-overlay{opacity:1;}
-  .avatar-upload-overlay span:first-child{font-size:1.5rem;}
-  .avatar-upload-input{display:none;}
-  .avatar-upload-btn{background:rgba(0,200,255,.1);border:1px dashed rgba(0,200,255,.4);border-radius:10px;padding:.9rem;text-align:center;cursor:pointer;transition:all .2s;color:var(--accent);font-size:.85rem;}
-  .avatar-upload-btn:hover{background:rgba(0,200,255,.18);}
-  .avatar-progress{height:4px;border-radius:4px;background:var(--border);margin-top:.5rem;overflow:hidden;display:none;}
-  .avatar-progress-bar{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--accent2),var(--accent));width:0;transition:width .4s;}
-  .avatar-sidebar-img{width:36px;height:36px;border-radius:50%;object-fit:cover;border:2px solid var(--border);}
-
   @keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
   @keyframes slideIn{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)}}
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  /* ── LOADING SCREEN ── */
+  #loading-screen{
+    position:fixed;inset:0;z-index:9999;background:var(--bg);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1.5rem;
+    transition:opacity .4s;
+  }
+  #loading-screen.hidden{opacity:0;pointer-events:none;}
+  .loading-logo{font-family:var(--font-head);font-weight:900;font-size:2.5rem;
+    background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+  .loading-spinner{width:40px;height:40px;border:3px solid rgba(0,200,255,.15);
+    border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;}
+  .loading-msg{color:var(--muted);font-family:var(--font-mono);font-size:.82rem;letter-spacing:1px;}
+  .loading-sub{color:rgba(107,122,154,.5);font-size:.75rem;font-family:var(--font-mono);}
+  .sync-indicator{position:fixed;top:1rem;right:1rem;background:rgba(0,200,255,.1);border:1px solid rgba(0,200,255,.3);
+    border-radius:20px;padding:.3rem .9rem;font-size:.75rem;font-family:var(--font-mono);color:var(--accent);
+    display:none;z-index:500;align-items:center;gap:.5rem;}
+  .sync-dot{width:6px;height:6px;border-radius:50%;background:var(--accent);animation:spin .8s linear infinite;border:1px solid transparent;border-top-color:var(--accent);}
+  .sync-indicator.visible{display:flex;}
+
+  /* ── PHOTO DE PROFIL ── */
+  .avatar-upload-zone{
+    width:140px;height:140px;border-radius:50%;border:3px dashed var(--border);
+    display:flex;align-items:center;justify-content:center;flex-direction:column;
+    cursor:pointer;transition:all .3s;position:relative;overflow:hidden;
+    background:var(--bg2);flex-shrink:0;
+  }
+  .avatar-upload-zone:hover{border-color:var(--accent);box-shadow:0 0 0 4px rgba(0,200,255,.1);}
+  .avatar-upload-zone img{width:100%;height:100%;object-fit:cover;border-radius:50%;}
+  .avatar-upload-overlay{
+    position:absolute;inset:0;border-radius:50%;background:rgba(0,0,0,.55);
+    display:flex;align-items:center;justify-content:center;flex-direction:column;gap:.3rem;
+    opacity:0;transition:opacity .2s;pointer-events:none;
+  }
+  .avatar-upload-zone:hover .avatar-upload-overlay{opacity:1;}
+  .avatar-upload-overlay span{font-size:.75rem;color:#fff;font-family:var(--font-mono);}
+  .avatar-upload-icon{font-size:1.6rem;}
+  .user-avatar img{width:100%;height:100%;object-fit:cover;border-radius:50%;}
+  .profil-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:2rem;display:flex;gap:2rem;align-items:flex-start;flex-wrap:wrap;margin-bottom:2rem;}
+  .profil-info{flex:1;min-width:200px;}
+  .profil-name{font-family:var(--font-head);font-size:1.6rem;font-weight:900;margin-bottom:.4rem;}
+  .profil-role{color:var(--accent);font-family:var(--font-mono);font-size:.82rem;margin-bottom:1rem;}
+  .profil-stat{display:flex;gap:1.5rem;flex-wrap:wrap;margin-top:1rem;}
+  .profil-stat-item{text-align:center;}
+  .profil-stat-val{font-family:var(--font-head);font-size:1.5rem;font-weight:900;color:var(--accent);}
+  .profil-stat-lbl{font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px;font-family:var(--font-mono);}
+
 </style>
 </head>
 <body>
 
+<!-- ═══════════════════════ LOADING ═══════════════════════ -->
+<div id="loading-screen">
+  <div class="loading-logo">MOS·RÉVIS</div>
+  <div class="loading-spinner"></div>
+  <div class="loading-msg" id="loading-msg">CONNEXION À SUPABASE…</div>
+  <div class="loading-sub">Synchronisation des données en cours</div>
+</div>
+
+<!-- SYNC INDICATOR -->
+<div class="sync-indicator" id="sync-indicator">
+  <div class="sync-dot"></div>
+  <span>Sauvegarde…</span>
+</div>
+
 <!-- ═══════════════════════ LOGIN ═══════════════════════ -->
-<div id="login-screen" class="screen active">
+<div id="login-screen" class="screen">
   <div class="login-header">
     <div class="login-logo">MOS<span>·</span>RÉVIS</div>
     <div class="login-sub">Plateforme BTS MOS — Management Opérationnel de la Sécurité</div>
@@ -546,15 +595,97 @@
 
 <script>
 // ════════════════════════════════════════════════════════
+//  SUPABASE — Configuration
+// ════════════════════════════════════════════════════════
+const SUPABASE_URL = 'https://wfgyjeqnbdrgrhmanatb.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_9qBIV2pHfS07-XnAXInxOA_QyaC8pgA';
+let sbClient = null;
+let supabaseReady = false;
+
+function initSupabase() {
+  try {
+    sbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    supabaseReady = true;
+  } catch(e) {
+    console.warn('Supabase init failed, mode local uniquement :', e);
+  }
+}
+
+// Sync depuis Supabase → localStorage au démarrage
+async function syncFromSupabase() {
+  if (!supabaseReady || !sbClient) return false;
+  try {
+    const { data, error } = await sbClient.from('mos_data').select('key, value');
+    if (error) { console.warn('Sync Supabase échouée :', error.message); return false; }
+    if (data && data.length > 0) {
+      data.forEach(row => {
+        localStorage.setItem('mos_' + row.key, JSON.stringify(row.value));
+      });
+    }
+    return true;
+  } catch(e) {
+    console.warn('Sync Supabase erreur réseau :', e);
+    return false;
+  }
+}
+
+// Push une clé vers Supabase (fire & forget)
+async function syncToSupabase(key, val) {
+  if (!supabaseReady || !sbClient) return;
+  showSyncIndicator(true);
+  try {
+    await sbClient.from('mos_data').upsert(
+      { key, value: val, updated_at: new Date().toISOString() },
+      { onConflict: 'key' }
+    );
+  } catch(e) {
+    console.warn('Push Supabase erreur :', e);
+  } finally {
+    showSyncIndicator(false);
+  }
+}
+
+function showSyncIndicator(visible) {
+  const el = document.getElementById('sync-indicator');
+  if (el) el.classList.toggle('visible', visible);
+}
+
+async function forceSyncFromSupabase() {
+  showSyncIndicator(true);
+  const ok = await syncFromSupabase();
+  showSyncIndicator(false);
+  if (ok) {
+    showToast('✅ Données resynchronisées depuis Supabase !');
+    buildSidebar();
+    showPage('admin-supabase');
+  } else {
+    showToast('⚠️ Impossible de joindre Supabase — données locales conservées');
+  }
+}
+
+// ════════════════════════════════════════════════════════
 //  CONSTANTES
 // ════════════════════════════════════════════════════════
-// Identifiants admin — lus depuis localStorage, avec valeurs par défaut
+// Gestion multi-admin — tableau stocké dans localStorage + Supabase
+const DEFAULT_ADMINS = [
+  { id: 1, username: 'admin', password: 'admin123', name: 'Administrateur', superadmin: true }
+];
+function getAdmins() {
+  const raw = localStorage.getItem('mos_admins');
+  return raw ? JSON.parse(raw) : JSON.parse(JSON.stringify(DEFAULT_ADMINS));
+}
+function setAdmins(list) {
+  localStorage.setItem('mos_admins', JSON.stringify(list));
+  syncToSupabase('admins', list);
+}
+// Compat legacy — cherche l'admin courant connecté
 function getAdminCreds() {
-  return {
-    user: localStorage.getItem('mos_admin_user') || 'admin',
-    pass: localStorage.getItem('mos_admin_pass') || 'admin123',
-    name: localStorage.getItem('mos_admin_name') || 'Administrateur'
-  };
+  if (currentUser && currentUser._adminId) {
+    const a = getAdmins().find(a => a.id === currentUser._adminId);
+    if (a) return { user: a.username, pass: a.password, name: a.name };
+  }
+  const a = getAdmins()[0];
+  return { user: a.username, pass: a.password, name: a.name };
 }
 const MAT_COLORS = ['tag-blue','tag-green','tag-orange','tag-yellow','tag-purple','tag-pink','tag-blue','tag-green'];
 const MAT_ICONS  = ['📘','📗','📙','📕','📓','📒','📔','📑'];
@@ -577,6 +708,7 @@ let currentMatTab = 'cours'; // pour les pages matière
 //  DONNÉES PAR DÉFAUT
 // ════════════════════════════════════════════════════════
 const defaultData = {
+  admins: [{ id: 1, username: 'admin', password: 'admin123', name: 'Administrateur', superadmin: true }],
   matieres: ['Pneumatique','Hydraulique','Automatismes','Électrotechnique','Mécanique','Sécurité'],
   etudiants: [
     { id:1, nom:'Dupont', prenom:'Jean', username:'jdupont', tempPass:'mos2024', password:null, firstLogin:true },
@@ -611,13 +743,17 @@ const defaultData = {
 };
 
 // ════════════════════════════════════════════════════════
-//  HELPERS DONNÉES (localStorage)
+//  HELPERS DONNÉES (localStorage + Supabase)
 // ════════════════════════════════════════════════════════
 function getData(key) {
   const raw = localStorage.getItem('mos_' + key);
   return raw ? JSON.parse(raw) : JSON.parse(JSON.stringify(defaultData[key] || []));
 }
-function setData(key, val) { localStorage.setItem('mos_' + key, JSON.stringify(val)); }
+function setData(key, val) {
+  localStorage.setItem('mos_' + key, JSON.stringify(val));
+  // Sync vers Supabase en arrière-plan (fire & forget)
+  syncToSupabase(key, val);
+}
 function getFileData(id)   { return localStorage.getItem('mos_file_' + id); }
 function setFileData(id,d) { try { localStorage.setItem('mos_file_' + id, d); return true; } catch(e) { return false; } }
 function delFileData(id)   { localStorage.removeItem('mos_file_' + id); }
@@ -632,6 +768,146 @@ function getMatIcon(mat) {
   return MAT_ICONS[i >= 0 ? i % MAT_ICONS.length : 0];
 }
 
+
+// ════════════════════════════════════════════════════════
+//  AVATARS — Photo de profil
+// ════════════════════════════════════════════════════════
+function avatarKey(role, id) { return 'avatar_' + role + '_' + id; }
+
+function getAvatar(role, id) {
+  const raw = localStorage.getItem('mos_' + avatarKey(role, id));
+  return raw ? JSON.parse(raw) : null;
+}
+
+function setAvatar(role, id, base64) {
+  const key = avatarKey(role, id);
+  localStorage.setItem('mos_' + key, JSON.stringify(base64));
+  syncToSupabase(key, base64);
+}
+
+// Redimensionne et recadre l'image en 512×512 (center crop)
+function resizeTo512(file) {
+  return new Promise((resolve, reject) => {
+    if (!file.type.match(/^image\/(png|jpeg)$/)) {
+      reject('Format non supporté — utilisez PNG ou JPEG'); return;
+    }
+    const reader = new FileReader();
+    reader.onload = e => {
+      const img = new Image();
+      img.onload = () => {
+        const SIZE = 512;
+        const canvas = document.createElement('canvas');
+        canvas.width = SIZE; canvas.height = SIZE;
+        const ctx = canvas.getContext('2d');
+        const scale = Math.max(SIZE / img.width, SIZE / img.height);
+        const w = img.width * scale, h = img.height * scale;
+        ctx.drawImage(img, (SIZE - w) / 2, (SIZE - h) / 2, w, h);
+        resolve(canvas.toDataURL('image/jpeg', 0.88));
+      };
+      img.onerror = () => reject('Impossible de lire l'image');
+      img.src = e.target.result;
+    };
+    reader.onerror = () => reject('Erreur de lecture du fichier');
+    reader.readAsDataURL(file);
+  });
+}
+
+// Ouvre le sélecteur de fichier pour l'avatar
+function openAvatarPicker(role, id) {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = 'image/png,image/jpeg';
+  input.onchange = async () => {
+    const file = input.files[0];
+    if (!file) return;
+    try {
+      showSyncIndicator(true);
+      const base64 = await resizeTo512(file);
+      setAvatar(role, id, base64);
+      // Mettre à jour immédiatement toutes les zones d'avatar visibles
+      refreshAvatarDisplays(role, id, base64);
+      showToast('✅ Photo de profil mise à jour !');
+    } catch(err) {
+      showToast('⚠️ ' + err);
+    } finally {
+      showSyncIndicator(false);
+    }
+  };
+  input.click();
+}
+
+function removeAvatar(role, id) {
+  const key = avatarKey(role, id);
+  localStorage.removeItem('mos_' + key);
+  if (sbClient) sbClient.from('mos_data').delete().eq('key', key).then(() => {});
+  refreshAvatarDisplays(role, id, null);
+  showToast('🗑 Photo supprimée');
+}
+
+// Rafraîchit toutes les zones d'affichage de l'avatar sans recharger la page
+function refreshAvatarDisplays(role, id, base64) {
+  // Sidebar avatar
+  const sbAv = document.getElementById('sb-avatar');
+  if (sbAv && currentRole === role && ((role === 'etudiant' && currentUser.id === id) || (role === 'admin' && currentUser._adminId === id))) {
+    renderSidebarAvatar(sbAv, base64, role);
+  }
+  // Zones d'upload dans la page courante
+  document.querySelectorAll('.avatar-upload-zone[data-role="' + role + '"][data-id="' + id + '"]').forEach(zone => {
+    renderAvatarZone(zone, base64);
+  });
+}
+
+function renderSidebarAvatar(el, base64, role) {
+  if (base64) {
+    el.innerHTML = `<img src="${base64}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`;
+    el.style.padding = '0';
+  } else {
+    if (role === 'admin') {
+      el.textContent = 'AD'; el.className = 'user-avatar admin';
+    } else {
+      const initials = (currentUser.prenom[0] + currentUser.nom[0]).toUpperCase();
+      el.textContent = initials; el.className = 'user-avatar student';
+    }
+    el.style.padding = '';
+  }
+}
+
+function renderAvatarZone(zone, base64) {
+  const overlay = zone.querySelector('.avatar-upload-overlay');
+  const existingImg = zone.querySelector('img.avatar-img');
+  if (existingImg) existingImg.remove();
+  const placeholder = zone.querySelector('.avatar-placeholder');
+  if (base64) {
+    const img = document.createElement('img');
+    img.className = 'avatar-img';
+    img.src = base64;
+    img.style.cssText = 'width:100%;height:100%;object-fit:cover;border-radius:50%;position:absolute;inset:0';
+    zone.insertBefore(img, overlay);
+    if (placeholder) placeholder.style.display = 'none';
+  } else {
+    if (placeholder) placeholder.style.display = '';
+  }
+}
+
+// Construit une zone d'upload cliquable
+function avatarUploadZoneHTML(role, id, base64, size=140) {
+  const hasImg = !!base64;
+  return `<div class="avatar-upload-zone" data-role="${role}" data-id="${id}"
+    style="width:${size}px;height:${size}px"
+    onclick="openAvatarPicker('${role}', ${id})">
+    ${hasImg ? `<img class="avatar-img" src="${base64}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;position:absolute;inset:0">` : ''}
+    <div class="avatar-placeholder" style="display:${hasImg?'none':'flex'};flex-direction:column;align-items:center;gap:.4rem">
+      <span style="font-size:${size > 80 ? '2.5rem' : '1.4rem'}">📷</span>
+      ${size > 80 ? `<span style="font-size:.72rem;color:var(--muted);font-family:var(--font-mono);text-align:center">PNG / JPEG<br>512×512</span>` : ''}
+    </div>
+    <div class="avatar-upload-overlay">
+      <span class="avatar-upload-icon">📷</span>
+      <span>Changer</span>
+      ${hasImg ? `<span onclick="event.stopPropagation();removeAvatar('${role}', ${id})" style="font-size:.7rem;color:var(--red);cursor:pointer;margin-top:.3rem">✕ Supprimer</span>` : ''}
+    </div>
+  </div>`;
+}
+
 // ════════════════════════════════════════════════════════
 //  LOGIN
 // ════════════════════════════════════════════════════════
@@ -644,9 +920,8 @@ function showLoginForm(type) {
     ? 'Connexion <span>Administrateur</span>'
     : 'Connexion <span>Étudiant</span>';
   document.getElementById('form-sub').textContent = 'Entrez vos identifiants pour accéder à la plateforme.';
-  const creds = getAdminCreds();
   document.getElementById('login-hint').innerHTML = type === 'admin'
-    ? `🔑 Identifiant actuel — <strong>${creds.user} / ••••••</strong>`
+    ? `🔑 Entrez votre identifiant et mot de passe administrateur`
     : '🔑 Démo — <strong>lmartin / test123</strong> &nbsp;|&nbsp; Première connexion : <strong>jdupont / mos2024</strong>';
   document.getElementById('err-msg').style.display = 'none';
   document.getElementById('inp-user').value = '';
@@ -666,10 +941,11 @@ function doLogin() {
   err.style.display = 'none';
 
   if (loginType === 'admin') {
-    const creds = getAdminCreds();
-    if (u !== creds.user || p !== creds.pass) { err.style.display = 'block'; return; }
+    const admins = getAdmins();
+    const adminFound = admins.find(a => a.username === u && a.password === p);
+    if (!adminFound) { err.style.display = 'block'; return; }
     currentRole = 'admin';
-    currentUser = { name: creds.name };
+    currentUser = { name: adminFound.name, _adminId: adminFound.id };
     goToApp();
   } else {
     const etudiants = getData('etudiants');
@@ -735,24 +1011,27 @@ function initApp() {
   // Avatar + user info
   const av = document.getElementById('sb-avatar');
   if (currentRole === 'admin') {
-    const creds = getAdminCreds();
-    const avatarSrc = getAvatarSrc('admin', 'admin');
-    if (avatarSrc) {
-      av.innerHTML = `<img src="${avatarSrc}" class="avatar-sidebar-img" alt="Avatar">`;
-      av.className = 'user-avatar';
-    } else {
-      av.textContent = 'AD'; av.className = 'user-avatar admin';
-    }
-    document.getElementById('sb-name').textContent = creds.name;
+    av.className = 'user-avatar admin';
+    const adminAvatar = getAvatar('admin', currentUser._adminId || 1);
+    if (adminAvatar) {
+      av.innerHTML = ''; av.style.padding='0';
+      const img = document.createElement('img');
+      img.src = adminAvatar; img.style.cssText='width:100%;height:100%;object-fit:cover;border-radius:50%';
+      av.appendChild(img);
+    } else { av.textContent = 'AD'; }
+    document.getElementById('sb-name').textContent = currentUser.name || 'Administrateur';
     document.getElementById('sb-role').textContent = 'Administrateur';
   } else {
-    const initials = (currentUser.prenom[0] + currentUser.nom[0]).toUpperCase();
-    const avatarSrc = getAvatarSrc(currentUser.id, 'etudiant');
-    if (avatarSrc) {
-      av.innerHTML = `<img src="${avatarSrc}" class="avatar-sidebar-img" alt="Avatar">`;
-      av.className = 'user-avatar';
+    av.className = 'user-avatar student';
+    const etAvatar = getAvatar('etudiant', currentUser.id);
+    if (etAvatar) {
+      av.innerHTML = ''; av.style.padding='0';
+      const img = document.createElement('img');
+      img.src = etAvatar; img.style.cssText='width:100%;height:100%;object-fit:cover;border-radius:50%';
+      av.appendChild(img);
     } else {
-      av.textContent = initials; av.className = 'user-avatar student';
+      const initials = (currentUser.prenom[0] + currentUser.nom[0]).toUpperCase();
+      av.textContent = initials;
     }
     document.getElementById('sb-name').textContent = currentUser.prenom + ' ' + currentUser.nom;
     document.getElementById('sb-role').textContent = 'BTS MOS — Étudiant';
@@ -789,12 +1068,13 @@ function buildSidebar() {
     navEl.appendChild(makeNavItem({ id:'admin-etudiants', icon:'👥', label:'Gérer les comptes' }));
 
     navEl.appendChild(makeSection('CONFIGURATION'));
-    navEl.appendChild(makeNavItem({ id:'admin-compte',   icon:'🔐', label:'Mon compte admin'      }));
+    navEl.appendChild(makeNavItem({ id:'admin-compte',   icon:'🔐', label:'Comptes admins'        }));
     navEl.appendChild(makeNavItem({ id:'admin-supabase', icon:'🗄️', label:'Supabase / Sauvegarde' }));
 
   } else {
     navEl.appendChild(makeSection('MON ESPACE'));
-    navEl.appendChild(makeNavItem({ id:'dash', icon:'🏠', label:'Tableau de bord' }));
+    navEl.appendChild(makeNavItem({ id:'dash',   icon:'🏠', label:'Tableau de bord' }));
+    navEl.appendChild(makeNavItem({ id:'profil', icon:'👤', label:'Mon profil'       }));
 
     if (matieres.length > 0) {
       navEl.appendChild(makeSection('COURS PAR MATIÈRE'));
@@ -806,8 +1086,6 @@ function buildSidebar() {
     navEl.appendChild(makeSection('RÉVISION'));
     navEl.appendChild(makeNavItem({ id:'fiches', icon:'📋', label:'Toutes les fiches' }));
     navEl.appendChild(makeNavItem({ id:'quiz',   icon:'🧠', label:'Tous les quiz'     }));
-    navEl.appendChild(makeSection('COMPTE'));
-    navEl.appendChild(makeNavItem({ id:'etudiant-compte', icon:'👤', label:'Mon profil' }));
   }
 }
 
@@ -834,10 +1112,11 @@ function buildMobileNav() {
         { id:'admin-cours',      icon:'📁', label:'Cours'     },
         { id:'admin-etudiants',  icon:'👥', label:'Étudiants' },
         { id:'admin-matieres',   icon:'🏷️', label:'Matières'  },
-        { id:'admin-compte',     icon:'🔐', label:'Compte'    },
+        { id:'admin-compte',     icon:'🔐', label:'Admins'    },
       ]
     : [
         { id:'dash',   icon:'🏠', label:'Accueil' },
+        { id:'profil', icon:'👤', label:'Profil'  },
         { id:'fiches', icon:'📋', label:'Fiches'  },
         { id:'quiz',   icon:'🧠', label:'Quiz'    },
       ];
@@ -972,82 +1251,67 @@ function renderStudent(id, main) {
       </div>
       <div class="grid-3">${quiz.map(q => quizCardStudent(q)).join('') || emptyState('Aucun quiz disponible','Votre enseignant n\'a pas encore créé de quiz.')}</div>
     </div>`;
-  } else if (id === 'etudiant-compte') {
-    const avatarHtml = getAvatarImgHtml(currentUser.id, 'etudiant', 100);
+
+  } else if (id === 'profil') {
+    const avatar = getAvatar('etudiant', currentUser.id);
     main.innerHTML = `
     <div class="page active">
       <div class="page-header">
         <div class="page-title">👤 Mon <span>Profil</span></div>
-        <div class="page-sub">Personnalisez votre compte étudiant</div>
+        <div class="page-sub">Personnalisez votre compte et votre photo</div>
       </div>
-      <div class="two-col">
-        <div>
-          <div class="section-title">Photo de profil</div>
-          <div class="admin-form" style="margin-bottom:1.5rem">
-            <div style="display:flex;align-items:center;gap:2rem;margin-bottom:1.5rem">
-              <div class="avatar-upload-zone" onclick="document.getElementById('avatar-input-etudiant').click()">
-                ${avatarHtml}
-                <div class="avatar-upload-overlay"><span>📷</span>Modifier</div>
-              </div>
-              <div style="flex:1">
-                <div style="font-weight:700;font-size:1rem;margin-bottom:.3rem">${currentUser.prenom} ${currentUser.nom}</div>
-                <div style="color:var(--muted);font-size:.82rem;font-family:var(--font-mono);margin-bottom:.8rem">@${currentUser.username} · Étudiant BTS MOS</div>
-                <div style="font-size:.8rem;color:var(--muted);line-height:1.5">Formats acceptés : <strong style="color:var(--accent)">PNG, JPEG</strong><br>Taille maximale : 5 MB<br>Résolution cible : <strong style="color:var(--accent)">512 × 512 px</strong></div>
-              </div>
-            </div>
-            <input type="file" id="avatar-input-etudiant" class="avatar-upload-input" accept="image/png,image/jpeg" onchange="handleAvatarUpload(this,'etudiant',${currentUser.id})">
-            <div class="avatar-upload-btn" onclick="document.getElementById('avatar-input-etudiant').click()">
-              📁 Choisir une photo de profil
-            </div>
-            <div class="avatar-progress" id="avatar-progress-etudiant">
-              <div class="avatar-progress-bar" id="avatar-progress-bar-etudiant"></div>
-            </div>
-            <div id="avatar-status-etudiant" style="font-size:.82rem;margin-top:.6rem;display:none"></div>
-          </div>
 
-          <div class="section-title">Modifier le mot de passe</div>
-          <div class="admin-form">
-            <div class="form-group">
-              <label>Mot de passe actuel</label>
-              <input type="password" id="old-etu-pass" placeholder="Votre mot de passe actuel" />
-            </div>
-            <div class="form-group">
-              <label>Nouveau mot de passe</label>
-              <input type="password" id="new-etu-pass" placeholder="Minimum 6 caractères" />
-            </div>
-            <div class="form-group">
-              <label>Confirmer le nouveau mot de passe</label>
-              <input type="password" id="confirm-etu-pass" placeholder="Répétez le nouveau mot de passe" />
-            </div>
-            <div id="etu-pass-err" style="color:var(--red);font-size:.82rem;margin-bottom:.8rem;display:none"></div>
-            <button class="btn-save" onclick="saveEtudiantPassword()">🔒 Changer le mot de passe</button>
+      <div class="profil-card">
+        ${avatarUploadZoneHTML('etudiant', currentUser.id, avatar, 140)}
+        <div class="profil-info">
+          <div class="profil-name">${currentUser.prenom} ${currentUser.nom}</div>
+          <div class="profil-role">🎓 BTS MOS — Étudiant</div>
+          <div style="font-family:var(--font-mono);font-size:.82rem;color:var(--muted);margin-bottom:1rem">@${currentUser.username}</div>
+          <div style="font-size:.85rem;color:var(--muted);line-height:1.6;max-width:480px">
+            Cliquez sur votre photo pour la modifier. L'image sera automatiquement recadrée en <strong style="color:var(--accent)">512×512 px</strong> et sauvegardée sur tous vos appareils via Supabase.
           </div>
-        </div>
-
-        <div>
-          <div class="section-title">Infos du compte</div>
-          <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1.5rem">
-            <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1.2rem">
-              ${getAvatarImgHtml(currentUser.id, 'etudiant', 52)}
-              <div>
-                <div style="font-weight:700;font-size:1.05rem">${currentUser.prenom} ${currentUser.nom}</div>
-                <div style="font-size:.8rem;color:var(--muted);font-family:var(--font-mono)">BTS MOS — Étudiant</div>
-              </div>
+          <div class="profil-stat">
+            <div class="profil-stat-item">
+              <div class="profil-stat-val">${cours.length}</div>
+              <div class="profil-stat-lbl">Cours</div>
             </div>
-            <div style="background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:1rem;font-family:var(--font-mono);font-size:.82rem">
-              <div style="margin-bottom:.5rem">👤 Identifiant : <span style="color:var(--accent)">${currentUser.username}</span></div>
-              <div style="margin-bottom:.5rem">🏷 Nom : <span style="color:var(--text)">${currentUser.prenom} ${currentUser.nom}</span></div>
-              <div>🔒 Mot de passe : <span style="color:var(--muted)">••••••••</span></div>
+            <div class="profil-stat-item">
+              <div class="profil-stat-val">${fiches.length}</div>
+              <div class="profil-stat-lbl">Fiches</div>
             </div>
-            <div style="margin-top:1.2rem;padding:.9rem;background:rgba(0,200,255,.05);border:1px solid rgba(0,200,255,.15);border-radius:8px;font-size:.82rem;color:var(--muted);line-height:1.6">
-              💡 Votre photo de profil est stockée ${getSbConfig().url ? 'sur <strong style="color:var(--accent)">Supabase Storage</strong>' : 'dans votre <strong style="color:var(--accent)">navigateur</strong> (localStorage)'}.
+            <div class="profil-stat-item">
+              <div class="profil-stat-val">${quiz.length}</div>
+              <div class="profil-stat-lbl">Quiz</div>
             </div>
           </div>
         </div>
+      </div>
+
+      <div class="section-title">Changer mon mot de passe</div>
+      <div class="admin-form" style="max-width:460px">
+        <div class="form-group">
+          <label>Mot de passe actuel</label>
+          <input type="password" id="et-old-pass" placeholder="Votre mot de passe actuel" />
+        </div>
+        <div class="form-group">
+          <label>Nouveau mot de passe</label>
+          <input type="password" id="et-new-pass" placeholder="Minimum 6 caractères" />
+        </div>
+        <div class="form-group">
+          <label>Confirmer</label>
+          <input type="password" id="et-confirm-pass" placeholder="Répétez" />
+        </div>
+        <div id="et-pass-err" style="color:var(--red);font-size:.82rem;margin-bottom:.8rem;display:none"></div>
+        <button class="btn-save" onclick="saveEtudiantPassword()">🔒 Changer mon mot de passe</button>
       </div>
     </div>`;
+    // Initialiser les zones d'avatar après rendu
+    document.querySelectorAll('.avatar-upload-zone').forEach(zone => {
+      renderAvatarZone(zone, getAvatar(zone.dataset.role, parseInt(zone.dataset.id)));
+    });
 
   } else {
+    // Fallback
     renderStudent('dash', main);
   }
 }
@@ -1366,58 +1630,42 @@ function renderAdmin(id, main) {
     </div>`;
 
   } else if (id === 'admin-compte') {
-    const creds = getAdminCreds();
-    const avatarHtml = getAvatarImgHtml('admin', 'admin', 100);
+    const admins = getAdmins();
+    const meId = currentUser._adminId || admins[0].id;
+    const me = admins.find(a => a.id === meId) || admins[0];
     main.innerHTML = `
     <div class="page active">
       <div class="page-header">
-        <div class="page-title">🔐 Mon <span>Compte Admin</span></div>
-        <div class="page-sub">Modifiez vos identifiants de connexion administrateur</div>
+        <div class="page-title">🔐 Gestion des <span>Administrateurs</span></div>
+        <div class="page-sub">Créez plusieurs comptes admin — chacun peut se connecter depuis n'importe quel appareil</div>
       </div>
       <div class="two-col">
         <div>
-          <div class="section-title">Photo de profil</div>
-          <div class="admin-form" style="margin-bottom:1.5rem">
-            <div style="display:flex;align-items:center;gap:2rem;margin-bottom:1.5rem">
-              <div class="avatar-upload-zone" onclick="document.getElementById('avatar-input-admin').click()">
-                ${avatarHtml}
-                <div class="avatar-upload-overlay"><span>📷</span>Modifier</div>
-              </div>
-              <div style="flex:1">
-                <div style="font-weight:700;font-size:1rem;margin-bottom:.3rem">${creds.name}</div>
-                <div style="color:var(--muted);font-size:.82rem;font-family:var(--font-mono);margin-bottom:.8rem">Administrateur</div>
-                <div style="font-size:.8rem;color:var(--muted);line-height:1.5">Formats : <strong style="color:var(--accent)">PNG, JPEG</strong><br>Max : 5 MB · Cible : <strong style="color:var(--accent)">512 × 512 px</strong></div>
-              </div>
-            </div>
-            <input type="file" id="avatar-input-admin" class="avatar-upload-input" accept="image/png,image/jpeg" onchange="handleAvatarUpload(this,'admin','admin')">
-            <div class="avatar-upload-btn" onclick="document.getElementById('avatar-input-admin').click()">
-              📁 Choisir une photo de profil
-            </div>
-            <div class="avatar-progress" id="avatar-progress-admin">
-              <div class="avatar-progress-bar" id="avatar-progress-bar-admin"></div>
-            </div>
-            <div id="avatar-status-admin" style="font-size:.82rem;margin-top:.6rem;display:none"></div>
-          </div>
-
-          <div class="section-title">Modifier l'identifiant</div>
+          <div class="section-title">Ajouter un administrateur</div>
           <div class="admin-form" style="margin-bottom:1.5rem">
             <div class="form-group">
-              <label>Identifiant actuel</label>
-              <input type="text" value="${creds.user}" disabled style="opacity:.5;cursor:not-allowed" />
+              <label>Nom affiché</label>
+              <input type="text" id="na-name" placeholder="Ex : M. Dupont" />
             </div>
             <div class="form-group">
-              <label>Nom affiché (sidebar)</label>
-              <input type="text" id="new-admin-name" value="${creds.name}" placeholder="Ex : M. Dupont" />
+              <label>Identifiant de connexion</label>
+              <input type="text" id="na-user" placeholder="Ex : dupont" />
             </div>
             <div class="form-group">
-              <label>Nouvel identifiant de connexion</label>
-              <input type="text" id="new-admin-user" placeholder="Laissez vide pour ne pas changer" />
+              <label>Mot de passe</label>
+              <input type="password" id="na-pass" placeholder="Minimum 6 caractères" />
             </div>
-            <button class="btn-save" style="background:linear-gradient(135deg,#a064ff,#6030c0)" onclick="saveAdminIdentifiant()">💾 Enregistrer l'identifiant</button>
+            <div class="form-group">
+              <label>Confirmer le mot de passe</label>
+              <input type="password" id="na-pass2" placeholder="Répétez" />
+            </div>
+            <div id="na-err" style="color:var(--red);font-size:.82rem;margin-bottom:.8rem;display:none"></div>
+            <button class="btn-save" style="background:linear-gradient(135deg,#a064ff,#6030c0)" onclick="addAdmin()">➕ Créer l'administrateur</button>
           </div>
 
-          <div class="section-title">Modifier le mot de passe</div>
+          <div class="section-title">Mon mot de passe</div>
           <div class="admin-form">
+            <div style="font-size:.82rem;color:var(--muted);margin-bottom:1rem">Connecté en tant que : <strong style="color:var(--accent)">${me.username}</strong></div>
             <div class="form-group">
               <label>Mot de passe actuel</label>
               <input type="password" id="old-admin-pass" placeholder="Votre mot de passe actuel" />
@@ -1427,227 +1675,98 @@ function renderAdmin(id, main) {
               <input type="password" id="new-admin-pass" placeholder="Minimum 6 caractères" />
             </div>
             <div class="form-group">
-              <label>Confirmer le nouveau mot de passe</label>
-              <input type="password" id="confirm-admin-pass" placeholder="Répétez le nouveau mot de passe" />
+              <label>Confirmer</label>
+              <input type="password" id="confirm-admin-pass" placeholder="Répétez" />
             </div>
             <div id="admin-pass-err" style="color:var(--red);font-size:.82rem;margin-bottom:.8rem;display:none"></div>
-            <button class="btn-save" onclick="saveAdminPassword()">🔒 Changer le mot de passe</button>
+            <button class="btn-save" onclick="saveAdminPassword()">🔒 Changer mon mot de passe</button>
           </div>
         </div>
 
         <div>
-          <div class="section-title">Identifiants actuels</div>
-          <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1.5rem">
-            <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1.2rem">
-              <div id="admin-compte-avatar-preview">${getAvatarImgHtml('admin','admin',52)}</div>
-              <div>
-                <div style="font-weight:700;font-size:1.05rem">${creds.name}</div>
-                <div style="font-size:.8rem;color:var(--muted);font-family:var(--font-mono)">Administrateur</div>
+          <div class="section-title">Administrateurs (${admins.length})</div>
+          ${admins.map(a => `
+            <div class="student-row" style="margin-bottom:.7rem">
+              <div class="user-avatar admin" style="width:38px;height:38px;font-size:.85rem;flex-shrink:0">${a.name.slice(0,2).toUpperCase()}</div>
+              <div class="student-info">
+                <div class="student-name">${a.name} ${a.id === meId ? '<span style="font-size:.7rem;color:var(--accent);font-family:var(--font-mono)">(vous)</span>' : ''}</div>
+                <div class="student-meta">@${a.username}${a.superadmin ? ' · super-admin' : ''}</div>
               </div>
-            </div>
-            <div style="background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:1rem;font-family:var(--font-mono);font-size:.82rem">
-              <div style="margin-bottom:.5rem">👤 Identifiant : <span style="color:var(--accent)">${creds.user}</span></div>
-              <div>🔒 Mot de passe : <span style="color:var(--muted)">••••••••</span></div>
-            </div>
-            <div style="margin-top:1.2rem;padding:.9rem;background:rgba(255,107,53,.07);border:1px solid rgba(255,107,53,.2);border-radius:8px;font-size:.82rem;color:var(--muted);line-height:1.6">
-              ⚠️ <strong style="color:var(--accent3)">Important :</strong> Après avoir changé vos identifiants, notez-les soigneusement. Si vous perdez votre mot de passe, vous devrez modifier directement le fichier HTML.
-            </div>
-            <div style="margin-top:1rem;padding:.9rem;background:rgba(0,200,255,.05);border:1px solid rgba(0,200,255,.15);border-radius:8px;font-size:.82rem;color:var(--muted);line-height:1.6">
-              💡 Les identifiants sont sauvegardés dans le <strong style="color:var(--accent)">localStorage</strong> de votre navigateur. Pour une sécurité maximale, utilisez Supabase Auth.
-            </div>
+              ${!a.superadmin && a.id !== meId
+                ? `<button class="btn-sm btn-red" onclick="deleteAdmin(${a.id})">🗑</button>`
+                : `<span style="font-size:.75rem;color:var(--muted);font-family:var(--font-mono)">protégé</span>`}
+            </div>`).join('')}
+          <div style="margin-top:1rem;padding:.9rem;background:rgba(255,107,53,.07);border:1px solid rgba(255,107,53,.2);border-radius:8px;font-size:.82rem;color:var(--muted);line-height:1.6">
+            ⚠️ <strong style="color:var(--accent3)">Important :</strong> Le super-admin ne peut pas être supprimé. Notez bien vos identifiants — les comptes admin sont synchronisés via Supabase et accessibles depuis tous les appareils.
           </div>
         </div>
       </div>
     </div>`;
-
   } else if (id === 'admin-supabase') {
-    const sbUrl = localStorage.getItem('mos_sb_url') || '';
-    const sbKey = localStorage.getItem('mos_sb_key') || '';
+    const sbStatus = supabaseReady ? '🟢 Connecté' : '🔴 Hors ligne';
+    const sbStatusColor = supabaseReady ? 'var(--green)' : 'var(--red)';
     main.innerHTML = `
     <div class="page active">
       <div class="page-header">
-        <div class="page-title">🗄️ Sauvegarde <span>Supabase</span></div>
-        <div class="page-sub">Connectez votre base de données pour une persistance durable des données</div>
+        <div class="page-title">🗄️ Synchronisation <span>Supabase</span></div>
+        <div class="page-sub">Les données sont automatiquement synchronisées entre tous les appareils</div>
       </div>
 
       <div class="two-col" style="margin-bottom:2rem">
         <div>
-          <div class="section-title">Configuration Supabase</div>
-          <div class="admin-form">
-            <div class="form-group">
-              <label>URL du projet Supabase</label>
-              <input type="text" id="sb-url" placeholder="https://xxxxxxxxxxxx.supabase.co" value="${sbUrl}" />
+          <div class="section-title">État de la connexion</div>
+          <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1.5rem">
+            <div style="font-size:1.1rem;font-weight:700;color:${sbStatusColor};margin-bottom:1rem">${sbStatus}</div>
+            <div style="background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:1rem;font-family:var(--font-mono);font-size:.78rem;line-height:1.8">
+              <div>🔗 URL : <span style="color:var(--accent)">wfgyjeqnbdrgrhmanatb.supabase.co</span></div>
+              <div>🔑 Clé : <span style="color:var(--muted)">sb_publishable_••••••••</span></div>
+              <div>📦 Table : <span style="color:var(--yellow)">mos_data</span></div>
             </div>
-            <div class="form-group">
-              <label>Clé publique (anon key)</label>
-              <input type="text" id="sb-key" placeholder="eyJhbGciOiJIUzI1NiIsInR5c..." value="${sbKey}" />
+            <div style="margin-top:1rem;font-size:.82rem;color:var(--muted);line-height:1.6">
+              ✅ Toutes les données (étudiants, cours, fiches, quiz, matières) sont synchronisées automatiquement à chaque modification.<br><br>
+              🔄 Au démarrage, les données sont rechargées depuis Supabase — les étudiants peuvent se connecter depuis n'importe quel appareil.
             </div>
-            <button class="btn-save" onclick="saveSbConfig()">💾 Enregistrer la configuration</button>
-            ${sbUrl ? `<div style="margin-top:1rem;color:var(--green);font-size:.85rem">✅ Configuration enregistrée</div>` : ''}
           </div>
         </div>
+
         <div>
-          <div class="section-title">État de la synchronisation</div>
+          <div class="section-title">Synchronisation manuelle</div>
           <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1.5rem">
-            ${sbUrl ? `<div style="color:var(--green);margin-bottom:1rem">🟢 Supabase configuré</div>` : `<div style="color:var(--yellow);margin-bottom:1rem">🟡 Supabase non configuré — utilisation du localStorage uniquement</div>`}
-            <div style="font-size:.85rem;color:var(--muted);line-height:1.7">
-              Sans Supabase, toutes les données (cours, fiches, quiz, comptes) sont stockées dans le navigateur. Elles seront perdues si le cache est effacé.<br><br>
-              Avec Supabase, les données sont sauvegardées dans le cloud et accessibles depuis n'importe quel appareil.
+            <div style="font-size:.85rem;color:var(--muted);margin-bottom:1.2rem;line-height:1.6">
+              Forcez une re-synchronisation depuis Supabase, ou exportez/importez en JSON comme sauvegarde locale.
             </div>
-            <div style="margin-top:1rem;display:flex;gap:.6rem;flex-wrap:wrap">
-              <button class="btn-sm btn-blue" onclick="exportData()">⬇ Exporter JSON</button>
-              <button class="btn-sm btn-green" onclick="document.getElementById('import-input').click()">⬆ Importer JSON</button>
+            <div style="display:flex;gap:.6rem;flex-wrap:wrap;margin-bottom:1rem">
+              <button class="btn-sm btn-blue" onclick="forceSyncFromSupabase()">🔄 Resynchroniser depuis Supabase</button>
+            </div>
+            <div style="border-top:1px solid var(--border);padding-top:1rem;display:flex;gap:.6rem;flex-wrap:wrap">
+              <button class="btn-sm btn-green" onclick="exportData()">⬇ Exporter JSON</button>
+              <button class="btn-sm btn-orange" onclick="document.getElementById('import-input').click()">⬆ Importer JSON</button>
               <input type="file" id="import-input" accept=".json" style="display:none" onchange="importData(this)">
             </div>
           </div>
         </div>
       </div>
 
-      <div class="section-title">Guide d'installation Supabase — Étape par étape</div>
-
-      <div class="sb-step">
-        <div class="sb-step-num">Étape 1</div>
-        <h3>Créer un compte Supabase</h3>
-        <p>Rendez-vous sur <a href="https://supabase.com" target="_blank" class="sb-link">supabase.com</a> et créez un compte gratuit. Créez ensuite un nouveau projet (choisissez une région proche de la France).</p>
+      <div class="section-title">⚠️ Configuration initiale requise — SQL à exécuter dans Supabase</div>
+      <div style="background:rgba(255,217,61,.06);border:1px solid rgba(255,217,61,.25);border-radius:10px;padding:1rem 1.2rem;margin-bottom:1.2rem;font-size:.85rem;color:var(--muted);line-height:1.6">
+        📋 <strong style="color:var(--yellow)">Action unique :</strong> Si la table <code style="color:var(--accent)">mos_data</code> n'a pas encore été créée, exécutez ce SQL une fois dans <strong>SQL Editor → New Query</strong> sur <a href="https://supabase.com/dashboard" target="_blank" class="sb-link">supabase.com/dashboard</a>.
       </div>
+      <div class="code-block">-- Copiez-collez dans Supabase → SQL Editor → New Query
 
-      <div class="sb-step">
-        <div class="sb-step-num">Étape 2</div>
-        <h3>Récupérer vos clés API</h3>
-        <p>Dans votre projet Supabase → <strong>Settings → API</strong>. Copiez :<br>• <strong>Project URL</strong> → collez dans le champ URL ci-dessus<br>• <strong>anon public key</strong> → collez dans le champ Clé ci-dessus</p>
-      </div>
-
-      <div class="sb-step">
-        <div class="sb-step-num">Étape 3</div>
-        <h3>Créer les tables — Exécutez ce SQL dans l'éditeur SQL Supabase</h3>
-        <p>Dans votre projet → <strong>SQL Editor → New Query</strong>, copiez-collez et exécutez :</p>
-        <div class="code-block">-- Matières
-CREATE TABLE matieres (
-  id SERIAL PRIMARY KEY,
-  nom TEXT NOT NULL UNIQUE,
-  created_at TIMESTAMP DEFAULT NOW()
+CREATE TABLE IF NOT EXISTS mos_data (
+  key         text        PRIMARY KEY,
+  value       jsonb       NOT NULL,
+  updated_at  timestamptz DEFAULT now()
 );
 
--- Cours
-CREATE TABLE cours (
-  id SERIAL PRIMARY KEY,
-  titre TEXT NOT NULL,
-  matiere TEXT,
-  fichier TEXT,
-  fichier_url TEXT,
-  taille TEXT,
-  date TEXT,
-  has_file BOOLEAN DEFAULT FALSE,
-  created_at TIMESTAMP DEFAULT NOW()
-);
+ALTER TABLE mos_data ENABLE ROW LEVEL SECURITY;
 
--- Fiches de révision
-CREATE TABLE fiches (
-  id SERIAL PRIMARY KEY,
-  titre TEXT NOT NULL,
-  matiere TEXT,
-  contenu TEXT,
-  date TEXT,
-  created_at TIMESTAMP DEFAULT NOW()
-);
+CREATE POLICY "allow_all" ON mos_data
+  FOR ALL TO anon, authenticated
+  USING (true) WITH CHECK (true);</div>
 
--- Quiz
-CREATE TABLE quiz (
-  id SERIAL PRIMARY KEY,
-  titre TEXT NOT NULL,
-  matiere TEXT,
-  duree INTEGER DEFAULT 10,
-  questions JSONB,
-  created_at TIMESTAMP DEFAULT NOW()
-);
-
--- Étudiants
-CREATE TABLE etudiants (
-  id SERIAL PRIMARY KEY,
-  nom TEXT NOT NULL,
-  prenom TEXT NOT NULL,
-  username TEXT UNIQUE NOT NULL,
-  temp_pass TEXT,
-  password TEXT,
-  first_login BOOLEAN DEFAULT TRUE,
-  created_at TIMESTAMP DEFAULT NOW()
-);
-
--- Activer RLS (Row Level Security) - optionnel pour démo
--- ALTER TABLE cours ENABLE ROW LEVEL SECURITY;</div>
-      </div>
-
-      <div class="sb-step">
-        <div class="sb-step-num">Étape 4</div>
-        <h3>Créer les buckets de stockage</h3>
-        <p>Dans votre projet → <strong>Storage → New Bucket</strong>, créez <strong>deux buckets</strong> :</p>
-        <div style="margin-top:.8rem;display:flex;flex-direction:column;gap:.6rem">
-          <div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:.8rem 1rem;font-family:var(--font-mono);font-size:.78rem">
-            <div style="color:var(--accent);margin-bottom:.3rem">📁 Bucket 1 — Cours</div>
-            <div>Nom : <strong>cours-files</strong> · ✅ Public bucket</div>
-            <div style="color:var(--muted);margin-top:.2rem">Stocke les fichiers PDF des cours</div>
-          </div>
-          <div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:.8rem 1rem;font-family:var(--font-mono);font-size:.78rem">
-            <div style="color:var(--green);margin-bottom:.3rem">🖼 Bucket 2 — Avatars</div>
-            <div>Nom : <strong>avatars</strong> · ✅ Public bucket</div>
-            <div style="color:var(--muted);margin-top:.2rem">Stocke les photos de profil 512×512 (PNG)</div>
-          </div>
-        </div>
-        <p style="margin-top:.8rem">Ajoutez cette politique RLS dans <strong>Storage → Policies</strong> pour le bucket <code style="color:var(--accent)">avatars</code> :</p>
-        <div class="code-block">-- Permettre la lecture publique des avatars
-CREATE POLICY "avatars_public_read"
-ON storage.objects FOR SELECT USING (bucket_id = 'avatars');
-
--- Permettre l'upload (anon key)
-CREATE POLICY "avatars_public_insert"
-ON storage.objects FOR INSERT WITH CHECK (bucket_id = 'avatars');
-
--- Permettre la mise à jour (upsert)
-CREATE POLICY "avatars_public_update"
-ON storage.objects FOR UPDATE USING (bucket_id = 'avatars');</div>
-      </div>
-
-      <div class="sb-step">
-        <div class="sb-step-num">Étape 5</div>
-        <h3>Adapter le code pour utiliser Supabase</h3>
-        <p>Ajoutez le SDK Supabase dans la balise &lt;head&gt; de ce fichier :</p>
-        <div class="code-block">&lt;script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"&gt;&lt;/script&gt;</div>
-        <p style="margin-top:.8rem">Puis initialisez le client et remplacez les fonctions getData/setData :</p>
-        <div class="code-block">const { createClient } = supabase;
-const sb = createClient('VOTRE_URL', 'VOTRE_ANON_KEY');
-
-// Exemple : charger les cours depuis Supabase
-async function loadCours() {
-  const { data, error } = await sb.from('cours').select('*');
-  if (error) { console.error(error); return []; }
-  return data;
-}
-
-// Exemple : sauvegarder un cours
-async function insertCours(cours) {
-  const { data, error } = await sb.from('cours').insert(cours);
-  return { data, error };
-}
-
-// Exemple : uploader un fichier PDF
-async function uploadFile(file, coursId) {
-  const { data, error } = await sb.storage
-    .from('cours-files')
-    .upload('cours/' + coursId + '/' + file.name, file);
-  if (error) return null;
-  const { data: urlData } = sb.storage.from('cours-files').getPublicUrl(data.path);
-  return urlData.publicUrl;
-}</div>
-      </div>
-
-      <div class="sb-step">
-        <div class="sb-step-num">Étape 6</div>
-        <h3>Migrer les données existantes</h3>
-        <p>Utilisez le bouton <strong>Exporter JSON</strong> ci-dessus pour télécharger toutes vos données actuelles, puis importez-les dans vos tables Supabase via l'interface ou via un script. Vous pouvez aussi utiliser le <strong>Table Editor</strong> de Supabase pour saisir les données manuellement.</p>
-      </div>
-
-      <div style="background:rgba(0,229,160,.05);border:1px solid rgba(0,229,160,.2);border-radius:10px;padding:1rem 1.2rem;margin-top:1rem;font-size:.85rem;color:var(--muted)">
-        💡 <strong style="color:var(--green)">Astuce :</strong> Pour une solution encore plus simple sans coder, vous pouvez utiliser le bouton "Exporter JSON" comme sauvegarde manuelle régulière, et "Importer JSON" pour restaurer vos données sur un autre appareil.
+      <div style="margin-top:1rem;background:rgba(0,229,160,.05);border:1px solid rgba(0,229,160,.2);border-radius:10px;padding:1rem 1.2rem;font-size:.85rem;color:var(--muted);line-height:1.6">
+        💡 <strong style="color:var(--green)">Comment ça marche :</strong> À chaque création/modification, les données partent vers Supabase. Quand un étudiant ouvre le site, il télécharge automatiquement toutes les données avant d'afficher la connexion.
       </div>
     </div>`;
   }
@@ -1921,178 +2040,31 @@ function resetEtudiant(id) {
   });
 }
 
-// ── COMPTE ÉTUDIANT ──
-function saveEtudiantPassword() {
-  const oldPass = document.getElementById('old-etu-pass').value;
-  const newPass = document.getElementById('new-etu-pass').value;
-  const conf    = document.getElementById('confirm-etu-pass').value;
-  const err     = document.getElementById('etu-pass-err');
+// ── COMPTE ADMIN (multi-admin) ──
+function addAdmin() {
+  const name  = document.getElementById('na-name').value.trim();
+  const user  = document.getElementById('na-user').value.trim().toLowerCase();
+  const pass  = document.getElementById('na-pass').value;
+  const pass2 = document.getElementById('na-pass2').value;
+  const err   = document.getElementById('na-err');
   err.style.display = 'none';
-  if (oldPass !== currentUser.password) {
-    err.textContent = '❌ Mot de passe actuel incorrect.'; err.style.display = 'block'; return;
-  }
-  if (newPass.length < 6) {
-    err.textContent = '❌ Le nouveau mot de passe doit faire au moins 6 caractères.'; err.style.display = 'block'; return;
-  }
-  if (newPass !== conf) {
-    err.textContent = '❌ Les mots de passe ne correspondent pas.'; err.style.display = 'block'; return;
-  }
-  const etudiants = getData('etudiants');
-  const idx = etudiants.findIndex(e => e.id === currentUser.id);
-  if (idx !== -1) { etudiants[idx].password = newPass; setData('etudiants', etudiants); currentUser.password = newPass; }
-  showToast('🔒 Mot de passe changé avec succès !');
-  showPage('etudiant-compte');
-}
-
-// ════════════════════════════════════════════════════════
-//  AVATAR / PHOTO DE PROFIL
-// ════════════════════════════════════════════════════════
-function getSbConfig() {
-  return { url: localStorage.getItem('mos_sb_url') || '', key: localStorage.getItem('mos_sb_key') || '' };
-}
-
-function getAvatarLocalKey(userId, role) {
-  return `mos_avatar_${role}_${userId}`;
-}
-
-function getAvatarSrc(userId, role) {
-  return localStorage.getItem(getAvatarLocalKey(userId, role)) || null;
-}
-
-function getAvatarImgHtml(userId, role, size) {
-  const src = getAvatarSrc(userId, role);
-  const isAdmin = role === 'admin';
-  if (src) {
-    return `<img src="${src}" style="width:${size}px;height:${size}px;border-radius:50%;object-fit:cover;border:3px solid var(--border);display:block" alt="Avatar">`;
-  }
-  const initials = isAdmin ? 'AD'
-    : (currentUser && role === 'etudiant' && userId === currentUser.id)
-      ? (currentUser.prenom[0] + currentUser.nom[0]).toUpperCase()
-      : '??';
-  const bg = isAdmin
-    ? 'linear-gradient(135deg,#ff6b3544,#ffd93d44)'
-    : 'linear-gradient(135deg,#0077ff44,#00c8ff44)';
-  const col = isAdmin ? 'var(--accent3)' : 'var(--accent)';
-  return `<div style="width:${size}px;height:${size}px;border-radius:50%;background:${bg};color:${col};display:flex;align-items:center;justify-content:center;font-family:var(--font-head);font-weight:700;font-size:${Math.round(size*.3)}px;border:3px solid var(--border)">${initials}</div>`;
-}
-
-function resizeImageTo512(file) {
-  return new Promise((resolve, reject) => {
-    if (!['image/png','image/jpeg'].includes(file.type)) {
-      reject(new Error('Format non supporté. Utilisez PNG ou JPEG.')); return;
-    }
-    if (file.size > 5 * 1024 * 1024) {
-      reject(new Error('Fichier trop lourd (max 5 MB).')); return;
-    }
-    const reader = new FileReader();
-    reader.onload = e => {
-      const img = new Image();
-      img.onload = () => {
-        const canvas = document.createElement('canvas');
-        canvas.width = 512; canvas.height = 512;
-        const ctx = canvas.getContext('2d');
-        // Cover crop : recadrage centré
-        const s = Math.min(img.width, img.height);
-        const sx = (img.width  - s) / 2;
-        const sy = (img.height - s) / 2;
-        ctx.drawImage(img, sx, sy, s, s, 0, 0, 512, 512);
-        resolve(canvas.toDataURL('image/png'));
-      };
-      img.onerror = () => reject(new Error('Image illisible.'));
-      img.src = e.target.result;
-    };
-    reader.onerror = () => reject(new Error('Lecture du fichier impossible.'));
-    reader.readAsDataURL(file);
-  });
-}
-
-async function uploadAvatarToSupabase(base64DataUrl, userId, role) {
-  const { url, key } = getSbConfig();
-  if (!url || !key) return null;
-  // Convert base64 to blob
-  const res = await fetch(base64DataUrl);
-  const blob = await res.blob();
-  const path = `avatars/${role}_${userId}.png`;
-  const uploadUrl = `${url}/storage/v1/object/avatars/${role}_${userId}.png`;
-  const resp = await fetch(uploadUrl, {
-    method: 'POST',
-    headers: { 'Authorization': `Bearer ${key}`, 'Content-Type': 'image/png', 'x-upsert': 'true' },
-    body: blob
-  });
-  if (!resp.ok) throw new Error('Erreur Supabase Storage : ' + resp.status);
-  return `${url}/storage/v1/object/public/avatars/${role}_${userId}.png`;
-}
-
-async function handleAvatarUpload(input, role, userId) {
-  const file = input.files[0];
-  if (!file) return;
-  const suffix = role === 'admin' ? 'admin' : 'etudiant';
-  const progWrap = document.getElementById(`avatar-progress-${suffix}`);
-  const progBar  = document.getElementById(`avatar-progress-bar-${suffix}`);
-  const status   = document.getElementById(`avatar-status-${suffix}`);
-
-  progWrap.style.display = 'block';
-  progBar.style.width = '20%';
-  status.style.display = 'none';
-
-  try {
-    const base64 = await resizeImageTo512(file);
-    progBar.style.width = '55%';
-
-    // Toujours sauvegarder en localStorage (fallback instantané)
-    localStorage.setItem(getAvatarLocalKey(userId, role), base64);
-    progBar.style.width = '75%';
-
-    // Tenter upload Supabase si configuré
-    const { url, key } = getSbConfig();
-    if (url && key) {
-      try {
-        await uploadAvatarToSupabase(base64, userId, role);
-        progBar.style.width = '100%';
-        status.textContent = '✅ Photo sauvegardée sur Supabase Storage !';
-        status.style.color = 'var(--green)';
-      } catch(e) {
-        progBar.style.width = '100%';
-        status.textContent = '⚠️ Supabase inaccessible — photo sauvegardée localement.';
-        status.style.color = 'var(--yellow)';
-      }
-    } else {
-      progBar.style.width = '100%';
-      status.textContent = '✅ Photo sauvegardée dans le navigateur.';
-      status.style.color = 'var(--green)';
-    }
-    status.style.display = 'block';
-
-    // Rafraîchir la sidebar
-    const av = document.getElementById('sb-avatar');
-    av.innerHTML = `<img src="${base64}" class="avatar-sidebar-img" alt="Avatar">`;
-    av.className = 'user-avatar';
-
-    // Rafraîchir la page
-    setTimeout(() => showPage(role === 'admin' ? 'admin-compte' : 'etudiant-compte'), 800);
-  } catch(err) {
-    progBar.style.width = '100%';
-    progBar.style.background = 'var(--red)';
-    status.textContent = '❌ ' + err.message;
-    status.style.color = 'var(--red)';
-    status.style.display = 'block';
-  }
-  input.value = '';
-}
-
-
-function saveAdminIdentifiant() {
-  const newName = document.getElementById('new-admin-name').value.trim();
-  const newUser = document.getElementById('new-admin-user').value.trim().toLowerCase();
-  if (newName) localStorage.setItem('mos_admin_name', newName);
-  if (newUser) {
-    if (newUser.length < 3) { customAlert('L\'identifiant doit faire au moins 3 caractères.', '⚠️'); return; }
-    localStorage.setItem('mos_admin_user', newUser);
-  }
-  // Rafraîchir le nom dans la sidebar
-  document.getElementById('sb-name').textContent = getAdminCreds().name;
-  showToast('✅ Identifiant mis à jour !');
+  if (!name || !user || !pass) { err.textContent = '❌ Tous les champs sont requis.'; err.style.display = 'block'; return; }
+  if (user.length < 3) { err.textContent = '❌ Identifiant trop court (min 3 car.).'; err.style.display = 'block'; return; }
+  if (pass.length < 6) { err.textContent = '❌ Mot de passe trop court (min 6 car.).'; err.style.display = 'block'; return; }
+  if (pass !== pass2) { err.textContent = '❌ Les mots de passe ne correspondent pas.'; err.style.display = 'block'; return; }
+  const admins = getAdmins();
+  if (admins.find(a => a.username === user)) { err.textContent = '❌ Cet identifiant est déjà utilisé.'; err.style.display = 'block'; return; }
+  admins.push({ id: Date.now(), username: user, password: pass, name, superadmin: false });
+  setAdmins(admins);
+  showToast('✅ Administrateur créé !');
   showPage('admin-compte');
+}
+function deleteAdmin(id) {
+  customConfirm('Supprimer cet administrateur ?', 'Ce compte admin sera définitivement supprimé.', '🗑️', () => {
+    const admins = getAdmins().filter(a => a.id !== id);
+    setAdmins(admins);
+    showToast('🗑 Administrateur supprimé'); showPage('admin-compte');
+  });
 }
 function saveAdminPassword() {
   const oldPass     = document.getElementById('old-admin-pass').value;
@@ -2100,30 +2072,23 @@ function saveAdminPassword() {
   const confirmPass = document.getElementById('confirm-admin-pass').value;
   const err         = document.getElementById('admin-pass-err');
   err.style.display = 'none';
-
-  const creds = getAdminCreds();
-  if (oldPass !== creds.pass) {
+  const admins = getAdmins();
+  const meId = currentUser._adminId || admins[0].id;
+  const idx = admins.findIndex(a => a.id === meId);
+  if (idx === -1) return;
+  if (oldPass !== admins[idx].password) {
     err.textContent = '❌ Mot de passe actuel incorrect.'; err.style.display = 'block'; return;
   }
   if (newPass.length < 6) {
-    err.textContent = '❌ Le nouveau mot de passe doit faire au moins 6 caractères.'; err.style.display = 'block'; return;
+    err.textContent = '❌ Minimum 6 caractères.'; err.style.display = 'block'; return;
   }
   if (newPass !== confirmPass) {
     err.textContent = '❌ Les mots de passe ne correspondent pas.'; err.style.display = 'block'; return;
   }
-  localStorage.setItem('mos_admin_pass', newPass);
+  admins[idx].password = newPass;
+  setAdmins(admins);
   showToast('🔒 Mot de passe changé avec succès !');
   showPage('admin-compte');
-}
-
-// ── SUPABASE CONFIG ──
-function saveSbConfig() {
-  const url = document.getElementById('sb-url').value.trim();
-  const key = document.getElementById('sb-key').value.trim();
-  localStorage.setItem('mos_sb_url', url);
-  localStorage.setItem('mos_sb_key', key);
-  showToast('✅ Configuration Supabase enregistrée !');
-  showPage('admin-supabase');
 }
 
 // ── EXPORT / IMPORT JSON ──
@@ -2183,7 +2148,12 @@ document.querySelectorAll('.modal-overlay').forEach(el => {
   el.addEventListener('click', e => { if(e.target===el) el.classList.remove('open'); });
 });
 
-document.addEventListener('DOMContentLoaded', () => {
+// ════════════════════════════════════════════════════════
+//  DÉMARRAGE — Sync Supabase puis affichage login
+// ════════════════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', async () => {
+
+  // Drag & drop file zone
   const zone = document.getElementById('file-drop-zone');
   if (zone) {
     zone.addEventListener('dragover', e=>{e.preventDefault();zone.classList.add('dragover');});
@@ -2194,6 +2164,28 @@ document.addEventListener('DOMContentLoaded', () => {
       if(f){ const inp=document.getElementById('file-input'); const dt=new DataTransfer(); dt.items.add(f); inp.files=dt.files; handleFile(inp); }
     });
   }
+
+  // Initialiser Supabase
+  const loadingMsg = document.getElementById('loading-msg');
+  initSupabase();
+
+  if (supabaseReady) {
+    loadingMsg.textContent = 'SYNCHRONISATION DES DONNÉES…';
+    const ok = await syncFromSupabase();
+    if (!ok) {
+      loadingMsg.textContent = '⚠️ HORS LIGNE — DONNÉES LOCALES';
+      await new Promise(r => setTimeout(r, 1200));
+    }
+  } else {
+    loadingMsg.textContent = '⚠️ SUPABASE INDISPONIBLE — MODE LOCAL';
+    await new Promise(r => setTimeout(r, 1200));
+  }
+
+  // Cacher le loading et afficher le login
+  const ls = document.getElementById('loading-screen');
+  ls.classList.add('hidden');
+  setTimeout(() => { ls.style.display = 'none'; }, 450);
+  document.getElementById('login-screen').classList.add('active');
 });
 </script>
 </body>
