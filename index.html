@@ -764,9 +764,27 @@ function setData(key, val) {
   // Sync vers Supabase en arrière-plan (fire & forget)
   syncToSupabase(key, val);
 }
-function getFileData(id)   { return localStorage.getItem('mos_file_' + id); }
-function setFileData(id,d) { try { localStorage.setItem('mos_file_' + id, d); return true; } catch(e) { return false; } }
-function delFileData(id)   { localStorage.removeItem('mos_file_' + id); }
+function getFileData(id) {
+  const raw = localStorage.getItem('mos_file_' + id);
+  if (!raw) return null;
+  // Quand la donnée vient de Supabase via syncFromSupabase, elle est JSON.stringify(string)
+  // Quand elle vient d'un upload direct, elle est la chaîne base64 brute
+  try { const parsed = JSON.parse(raw); return typeof parsed === 'string' ? parsed : raw; }
+  catch(e) { return raw; }
+}
+function setFileData(id, d) {
+  try {
+    localStorage.setItem('mos_file_' + id, d);
+    // Synchronise le fichier vers Supabase pour que tous les appareils y aient accès
+    syncToSupabase('file_' + id, d);
+    return true;
+  } catch(e) { return false; }
+}
+function delFileData(id) {
+  localStorage.removeItem('mos_file_' + id);
+  // Supprime aussi de Supabase
+  if (sbClient) sbClient.from('mos_data').delete().eq('key', 'file_' + id).then(() => {});
+}
 function getMatColor(mat) {
   const mats = getData('matieres');
   const i = mats.indexOf(mat);
@@ -930,9 +948,8 @@ function showLoginForm(type) {
     ? 'Connexion <span>Administrateur</span>'
     : 'Connexion <span>Étudiant</span>';
   document.getElementById('form-sub').textContent = 'Entrez vos identifiants pour accéder à la plateforme.';
-  document.getElementById('login-hint').innerHTML = type === 'admin'
-    ? `🔑 Entrez votre identifiant et mot de passe administrateur`
-    : '🔑 Démo — <strong>lmartin / test123</strong> &nbsp;|&nbsp; Première connexion : <strong>jdupont / mos2024</strong>';
+  document.getElementById('login-hint').innerHTML = `🔑 Entrez votre identifiant et mot de passe administrateur`;
+  document.getElementById('login-hint').style.display = type === 'admin' ? '' : 'none';
   document.getElementById('err-msg').style.display = 'none';
   document.getElementById('inp-user').value = '';
   document.getElementById('inp-pass').value = '';
@@ -1461,7 +1478,7 @@ function renderAdmin(id, main) {
     <div class="page active">
       <div class="page-header">
         <div class="page-title">📁 Gestion des <span>Cours</span></div>
-        <div class="page-sub">Ajoutez et gérez les fichiers de cours — Les fichiers sont stockés localement (Supabase recommandé pour les gros fichiers)</div>
+        <div class="page-sub">Ajoutez et gérez les fichiers de cours — Les fichiers sont synchronisés sur Supabase et accessibles depuis tous les appareils</div>
       </div>
       <div class="two-col">
         <div>
@@ -1947,17 +1964,19 @@ function openFiche(id) {
 //  FICHIERS COURS (vue + téléchargement)
 // ════════════════════════════════════════════════════════
 function viewCours(id, titre) {
-  const data = getFileData(id);
-  if (!data) { showToast('⚠️ Aucun fichier disponible — uploadez un fichier via l\'espace admin'); return; }
+  const c = getData('cours').find(c => c.id === id);
+  const url = c?.fileUrl || getFileData(id);
+  if (!url) { showToast('⚠️ Aucun fichier disponible — uploadez un fichier via l\'espace admin'); return; }
   document.getElementById('cours-viewer-title').textContent = titre;
-  document.getElementById('cours-viewer-iframe').src = data;
+  document.getElementById('cours-viewer-iframe').src = url;
   document.getElementById('cours-viewer-modal').classList.add('open');
 }
 function downloadCours(id, filename) {
-  const data = getFileData(id);
-  if (!data) { showToast('⚠️ Aucun fichier disponible — uploadez un fichier via l\'espace admin'); return; }
+  const c = getData('cours').find(c => c.id === id);
+  const url = c?.fileUrl || getFileData(id);
+  if (!url) { showToast('⚠️ Aucun fichier disponible — uploadez un fichier via l\'espace admin'); return; }
   const a = document.createElement('a');
-  a.href = data; a.download = filename;
+  a.href = url; a.download = filename; a.target = '_blank';
   document.body.appendChild(a); a.click(); document.body.removeChild(a);
 }
 
@@ -1968,34 +1987,52 @@ function handleFile(input) {
   const f = input.files[0];
   if (!f) return;
   pendingFile = f;
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    pendingFileData = e.target.result;
-    document.getElementById('file-preview').innerHTML = `
-      <div class="file-item">
-        <span class="file-item-icon">📄</span>
-        <div class="file-item-info">
-          <div class="file-item-name">${f.name}</div>
-          <div class="file-item-size">${(f.size/1024/1024).toFixed(2)} MB ${f.size > 4*1024*1024 ? '⚠️ Fichier volumineux' : '✅'}</div>
-        </div>
-        <button class="btn-sm btn-red" onclick="pendingFile=null;pendingFileData=null;document.getElementById('file-preview').innerHTML=''">✕</button>
-      </div>`;
-  };
-  reader.readAsDataURL(f);
+  pendingFileData = null;
+  document.getElementById('file-preview').innerHTML = `
+    <div class="file-item">
+      <span class="file-item-icon">📄</span>
+      <div class="file-item-info">
+        <div class="file-item-name">${f.name}</div>
+        <div class="file-item-size">${(f.size/1024/1024).toFixed(2)} MB — Prêt à publier</div>
+      </div>
+      <button class="btn-sm btn-red" onclick="pendingFile=null;pendingFileData=null;document.getElementById('file-preview').innerHTML=''">✕</button>
+    </div>`;
 }
 
-function saveCours() {
+async function saveCours() {
   const titre = document.getElementById('nc-titre').value.trim();
   const mat   = document.getElementById('nc-mat').value;
   if (!titre) { customAlert('Veuillez entrer un titre pour le cours.', '⚠️'); return; }
+
   const id = Date.now();
-  const cours = getData('cours');
-  cours.push({ id, titre, matiere:mat, fichier:pendingFile?pendingFile.name:'(sans fichier)', taille:pendingFile?`${(pendingFile.size/1024/1024).toFixed(1)} MB`:'—', date:new Date().toLocaleDateString('fr-FR'), hasFile:!!pendingFileData });
-  setData('cours', cours);
-  if (pendingFileData) {
-    const ok = setFileData(id, pendingFileData);
-    if (!ok) showToast('⚠️ Fichier trop volumineux pour le stockage local — utilisez Supabase Storage');
+  let fileUrl = null;
+  let taille = '—';
+
+  if (pendingFile) {
+    showToast('⏳ Upload du fichier en cours…');
+    showSyncIndicator(true);
+    try {
+      const path = `${id}_${pendingFile.name}`;
+      const { error } = await sbClient.storage
+        .from('cours-files')
+        .upload(path, pendingFile, { upsert: true });
+      if (error) throw error;
+      const { data: urlData } = sbClient.storage
+        .from('cours-files')
+        .getPublicUrl(path);
+      fileUrl = urlData.publicUrl;
+      taille = `${(pendingFile.size / 1024 / 1024).toFixed(1)} MB`;
+    } catch(e) {
+      showToast('❌ Erreur upload : ' + e.message);
+      showSyncIndicator(false);
+      return;
+    }
+    showSyncIndicator(false);
   }
+
+  const cours = getData('cours');
+  cours.push({ id, titre, matiere:mat, fichier:pendingFile?pendingFile.name:'(sans fichier)', taille, date:new Date().toLocaleDateString('fr-FR'), hasFile:!!fileUrl, fileUrl });
+  setData('cours', cours);
   pendingFile = null; pendingFileData = null;
   showToast('✅ Cours publié avec succès !');
   buildSidebar(); showPage('admin-cours');
@@ -2067,9 +2104,17 @@ function customAlert(msg, icon) {
 }
 
 function deleteCours(id) {
-  customConfirm('Supprimer ce cours ?', 'Cette action est irréversible. Le fichier associé sera également supprimé.', '🗑️', () => {
+  customConfirm('Supprimer ce cours ?', 'Cette action est irréversible. Le fichier associé sera également supprimé.', '🗑️', async () => {
+    const c = getData('cours').find(c => c.id === id);
+    // Supprime le fichier de Supabase Storage si présent
+    if (c?.fileUrl && sbClient) {
+      const path = c.fileUrl.split('/cours-files/')[1];
+      if (path) await sbClient.storage.from('cours-files').remove([path]);
+    }
+    // Supprime aussi l'éventuel ancien fichier base64
+    delFileData(id);
     setData('cours', getData('cours').filter(c => c.id !== id));
-    delFileData(id); showToast('🗑 Cours supprimé'); showPage('admin-cours');
+    showToast('🗑 Cours supprimé'); showPage('admin-cours');
   });
 }
 function deleteFiche(id) {
