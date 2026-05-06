@@ -666,7 +666,7 @@ async function forceSyncFromSupabase() {
   showSyncIndicator(false);
   if (ok) {
     showToast('✅ Données resynchronisées depuis Supabase !');
-    buildSidebar();
+    buildSidebar(); buildMobileNav();
     showPage('admin-supabase');
   } else {
     showToast('⚠️ Impossible de joindre Supabase — données locales conservées');
@@ -1154,7 +1154,7 @@ function buildMobileNav() {
     btn.className = 'mob-nav-btn';
     btn.dataset.page = item.id;
     btn.innerHTML = `<span class="icon">${item.icon}</span>${item.label}`;
-    btn.addEventListener('click', () => showPage(item.id));
+    btn.addEventListener('click', () => { showPage(item.id); closeSidebar(); });
     nav.appendChild(btn);
   });
 }
@@ -2035,7 +2035,7 @@ async function saveCours() {
   setData('cours', cours);
   pendingFile = null; pendingFileData = null;
   showToast('✅ Cours publié avec succès !');
-  buildSidebar(); showPage('admin-cours');
+  buildSidebar(); buildMobileNav(); showPage('admin-cours');
 }
 function saveFiche() {
   const titre   = document.getElementById('nf-titre').value.trim();
@@ -2137,13 +2137,13 @@ function saveMatiere() {
   const matieres = getData('matieres');
   if (matieres.includes(nom)) { customAlert('Cette matière existe déjà.', '⚠️'); return; }
   matieres.push(nom); setData('matieres', matieres);
-  buildSidebar(); showToast('✅ Matière ajoutée !'); showPage('admin-matieres');
+  buildSidebar(); buildMobileNav(); showToast('✅ Matière ajoutée !'); showPage('admin-matieres');
 }
 function deleteMatiere(nom) {
   customConfirm(`Supprimer "${nom}" ?`, 'Les cours, fiches et quiz liés à cette matière ne seront pas supprimés, mais la matière disparaîtra de la navigation.', '🏷️', () => {
     const matieres = getData('matieres').filter(m => m !== nom);
     setData('matieres', matieres);
-    buildSidebar(); showToast('🗑 Matière supprimée'); showPage('admin-matieres');
+    buildSidebar(); buildMobileNav(); showToast('🗑 Matière supprimée'); showPage('admin-matieres');
   });
 }
 
@@ -2262,7 +2262,7 @@ function importData(input) {
       if (data.cours)     setData('cours',     data.cours);
       if (data.fiches)    setData('fiches',    data.fiches);
       if (data.quiz)      setData('quiz',      data.quiz);
-      buildSidebar(); showToast('✅ Données importées avec succès !');
+      buildSidebar(); buildMobileNav(); showToast('✅ Données importées avec succès !');
       showPage('admin-supabase');
     } catch(err) { alert('Erreur lors de l\'import : fichier JSON invalide.'); }
   };
